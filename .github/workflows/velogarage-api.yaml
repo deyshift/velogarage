@@ -16,6 +16,10 @@ on:
 permissions:
   contents: read
 
+# Deployment is handled by Railway's native GitHub integration, which
+# auto-deploys api/ on every push to main (root directory set to "api").
+# Strava/runtime env vars (STRAVA_CLIENT_ID, STRAVA_CLIENT_SECRET,
+# API_PUBLIC_URL) are configured in the Railway dashboard, not here.
 jobs:
   test-api:
     name: Lint & validate API
@@ -43,43 +47,3 @@ jobs:
           STRAVA_CLIENT_SECRET: "placeholder"
           API_PUBLIC_URL: "http://localhost:8000"
         run: python -c "import main; print('API imports OK')"
-
-  deploy-api:
-    name: Deploy API to production
-    runs-on: ubuntu-latest
-    needs: test-api
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    defaults:
-      run:
-        working-directory: api
-    environment: production
-
-    steps:
-      - uses: actions/checkout@v4
-
-      # Example deploy step for Railway — swap for your chosen platform.
-      # Required GitHub secrets (Settings → Secrets → Actions):
-      #   STRAVA_CLIENT_ID       — from strava.com/settings/api
-      #   STRAVA_CLIENT_SECRET   — from strava.com/settings/api
-      #   RAILWAY_TOKEN          — from railway.app account settings
-      #
-      # The Expo app only needs EXPO_PUBLIC_STRAVA_CLIENT_ID (the public client ID).
-      # STRAVA_CLIENT_SECRET must NEVER appear in the Expo app or its build env.
-
-      - name: Install Railway CLI
-        run: npm install -g @railway/cli
-
-      # Required GitHub secrets:
-      #   STRAVA_CLIENT_ID       — from strava.com/settings/api
-      #   STRAVA_CLIENT_SECRET   — from strava.com/settings/api
-      #   API_PUBLIC_URL         — deployed Railway URL, e.g. https://velogarage-api.up.railway.app
-      #                            Set Authorization Callback Domain in Strava to its hostname only
-      #   RAILWAY_TOKEN          — from railway.app account settings
-      - name: Deploy to Railway
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        run: |
-          railway up --service velogarage-api \
-            --set STRAVA_CLIENT_ID="${{ secrets.STRAVA_CLIENT_ID }}" \
-            --set STRAVA_CLIENT_SECRET="${{ secrets.STRAVA_CLIENT_SECRET }}" \
-            --set API_PUBLIC_URL="${{ secrets.API_PUBLIC_URL }}"
