@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="150" height="44" viewBox="0 0 150 44" role="img" aria-label="Powered by Strava">
+  <text x="75" y="13" text-anchor="middle"
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+        font-size="9" font-weight="600" letter-spacing="2.5" fill="#9aa0a6">POWERED BY</text>
+  <text x="75" y="37" text-anchor="middle"
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif"
+        font-size="24" font-weight="800" letter-spacing="1" fill="#FC4C02">STRAVA</text>
+</svg>

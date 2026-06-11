@@ -9,7 +9,7 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --orange: #FC4C02;
+      --accent: #10A37F;
       --bg: #0d0d0d;
       --surface: #181818;
       --surface2: #222;
@@ -44,7 +44,7 @@
       justify-content: space-between;
     }
     .nav-logo { font-weight: 800; font-size: 18px; color: var(--text); text-decoration: none; display: flex; align-items: center; gap: 8px; }
-    .nav-logo span { color: var(--orange); }
+    .nav-logo span { color: var(--accent); }
     .nav-links { display: flex; gap: 24px; }
     .nav-links a { color: var(--muted); text-decoration: none; font-size: 14px; transition: color .2s; }
     .nav-links a:hover { color: var(--text); }
@@ -58,12 +58,12 @@
     }
     .hero-emoji { font-size: 72px; line-height: 1; margin-bottom: 24px; }
     .hero h1 { font-size: clamp(40px, 8vw, 72px); font-weight: 900; letter-spacing: -2px; line-height: 1.05; }
-    .hero h1 em { color: var(--orange); font-style: normal; }
+    .hero h1 em { color: var(--accent); font-style: normal; }
     .hero p { margin: 20px auto 0; max-width: 520px; font-size: 18px; color: var(--muted); line-height: 1.7; }
     .hero-cta { display: flex; gap: 12px; justify-content: center; margin-top: 36px; flex-wrap: wrap; }
     .btn { display: inline-block; padding: 14px 28px; border-radius: 10px; font-weight: 700; font-size: 15px; text-decoration: none; transition: opacity .2s; }
     .btn:hover { opacity: 0.85; }
-    .btn-primary { background: var(--orange); color: #fff; }
+    .btn-primary { background: var(--accent); color: #fff; }
     .btn-secondary { background: var(--surface); color: var(--text); border: 1px solid #333; }
 
     /* PHONE MOCKUP */
@@ -84,7 +84,7 @@
     .screen-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
     .bike-card { background: var(--surface); margin: 12px; border-radius: 14px; padding: 16px; }
     .bike-name { font-weight: 700; color: #fff; font-size: 15px; }
-    .bike-dist { color: var(--orange); font-size: 13px; font-weight: 600; margin-top: 4px; }
+    .bike-dist { color: var(--accent); font-size: 13px; font-weight: 600; margin-top: 4px; }
     .comp-list { padding: 0 12px 12px; display: flex; flex-direction: column; gap: 8px; }
     .comp-row { background: var(--surface); border-radius: 12px; padding: 12px 14px; }
     .comp-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
@@ -102,7 +102,7 @@
 
     /* FEATURES */
     .section { max-width: 1000px; margin: 0 auto; padding: 80px 24px; }
-    .section-label { font-size: 12px; font-weight: 700; color: var(--orange); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 12px; }
+    .section-label { font-size: 12px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 12px; }
     .section-title { font-size: clamp(28px, 5vw, 42px); font-weight: 800; letter-spacing: -1px; margin-bottom: 16px; }
     .section-body { font-size: 17px; color: var(--muted); max-width: 540px; line-height: 1.7; }
     .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-top: 48px; }
@@ -123,7 +123,7 @@
       width: 2px;
       background: #222;
     }
-    .step-num { width: 48px; height: 48px; border-radius: 50%; background: var(--orange); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 18px; color: #fff; flex-shrink: 0; }
+    .step-num { width: 48px; height: 48px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 18px; color: #fff; flex-shrink: 0; }
     .step-content { padding-top: 10px; }
     .step-title { font-size: 17px; font-weight: 700; color: #fff; margin-bottom: 4px; }
     .step-desc { font-size: 14px; color: var(--muted); line-height: 1.6; }
@@ -133,7 +133,7 @@
     .intervals-table th { text-align: left; font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; padding: 10px 16px; border-bottom: 1px solid #222; }
     .intervals-table td { padding: 14px 16px; border-bottom: 1px solid #1a1a1a; font-size: 14px; }
     .intervals-table td:first-child { color: #fff; font-weight: 500; }
-    .intervals-table td:last-child { color: var(--orange); font-weight: 600; }
+    .intervals-table td:last-child { color: var(--accent); font-weight: 600; }
     .intervals-table tr:hover td { background: var(--surface); }
 
     /* PRIVACY */
@@ -384,10 +384,12 @@
     <p>
       VeloGarage is open source —
       <a href="https://github.com/deyshift/velogarage">view on GitHub</a>
-      &nbsp;·&nbsp;
-      <a href="https://www.strava.com">Powered by Strava</a>
     </p>
-    <p style="margin-top: 8px; color: #444;">Not affiliated with Strava, Inc.</p>
+    <a href="https://www.strava.com" aria-label="Powered by Strava"
+       style="display:inline-block; margin-top:20px;">
+      <img src="assets/powered-by-strava.svg" alt="Powered by Strava" width="150" height="44" />
+    </a>
+    <p style="margin-top: 16px; color: #444;">Not affiliated with Strava, Inc.</p>
   </footer>
 
 </body>
