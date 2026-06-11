@@ -41,6 +41,7 @@ jobs:
         env:
           STRAVA_CLIENT_ID: "0"
           STRAVA_CLIENT_SECRET: "placeholder"
+          API_PUBLIC_URL: "http://localhost:8000"
         run: python -c "import main; print('API imports OK')"
 
   deploy-api:
