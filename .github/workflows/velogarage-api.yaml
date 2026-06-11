@@ -16,10 +16,10 @@ on:
 permissions:
   contents: read
 
-# Deployment is handled by Railway's native GitHub integration, which
+# Deployment is handled by Render's native GitHub integration, which
 # auto-deploys api/ on every push to main (root directory set to "api").
 # Strava/runtime env vars (STRAVA_CLIENT_ID, STRAVA_CLIENT_SECRET,
-# API_PUBLIC_URL) are configured in the Railway dashboard, not here.
+# API_PUBLIC_URL) are configured in the Render dashboard, not here.
 jobs:
   test-api:
     name: Lint & validate API
