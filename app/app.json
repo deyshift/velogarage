@@ -11,7 +11,7 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#FC4C02"
+      "backgroundColor": "#10A37F"
     },
     "ios": {
       "supportsTablet": false,
@@ -23,7 +23,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#FC4C02"
+        "backgroundColor": "#10A37F"
       },
       "package": "com.velogarage.app",
       "intentFilters": [
