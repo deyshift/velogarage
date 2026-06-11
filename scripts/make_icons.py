@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""Generate the VeloGarage icon set (Strava-orange bike mark)."""
+"""Generate the VeloGarage icon set: a white bike mark on emerald (#10A37F)."""
+from pathlib import Path
+
 from PIL import Image, ImageDraw
 
 SS = 4                      # supersample factor
@@ -7,6 +9,10 @@ BASE = 1024
 N = BASE * SS
 BRAND = (16, 163, 127, 255)  # VeloGarage emerald #10A37F
 WHITE = (255, 255, 255, 255)
+
+# Output directory, resolved relative to this file so the script works
+# regardless of the current working directory.
+ASSETS_DIR = Path(__file__).resolve().parent.parent / "app" / "assets"
 
 
 def s(v):
@@ -76,19 +82,25 @@ def place(glyph, size, frac, bg):
     return canvas
 
 
-bike = draw_bike(WHITE)
+def main():
+    ASSETS_DIR.mkdir(parents=True, exist_ok=True)
+    bike = draw_bike(WHITE)
 
-# App icon (full-bleed brand square, OS masks corners)
-icon = place(bike, 1024, 0.66, BRAND)
-icon.convert("RGB").save("app/assets/icon.png")
+    # App icon (full-bleed brand square, OS masks corners)
+    icon = place(bike, 1024, 0.66, BRAND)
+    icon.convert("RGB").save(ASSETS_DIR / "icon.png")
 
-# Android adaptive foreground (transparent, generous safe-zone padding)
-place(bike, 1024, 0.58, (0, 0, 0, 0)).save("app/assets/adaptive-icon.png")
+    # Android adaptive foreground (transparent, generous safe-zone padding)
+    place(bike, 1024, 0.58, (0, 0, 0, 0)).save(ASSETS_DIR / "adaptive-icon.png")
 
-# Splash mark (transparent; sits on the brand splash background)
-place(bike, 1024, 0.42, (0, 0, 0, 0)).save("app/assets/splash-icon.png")
+    # Splash mark (transparent; sits on the brand splash background)
+    place(bike, 1024, 0.42, (0, 0, 0, 0)).save(ASSETS_DIR / "splash-icon.png")
 
-# Convenience size for app-store / Strava developer console upload
-icon.resize((512, 512), Image.LANCZOS).convert("RGB").save("app/assets/app-icon-512.png")
+    # Convenience size for app-store / Strava developer console upload
+    icon.resize((512, 512), Image.LANCZOS).convert("RGB").save(ASSETS_DIR / "app-icon-512.png")
 
-print("icons written to app/assets/")
+    print(f"icons written to {ASSETS_DIR}")
+
+
+if __name__ == "__main__":
+    main()
