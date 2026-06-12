@@ -22,12 +22,20 @@ WEB_APP_URL = os.environ.get(
 STRAVA_SCOPE = "activity:read_all"
 # Deep link the native Expo app registers; web logins go to WEB_APP_URL instead.
 NATIVE_AUTH_REDIRECT = "velogarage://auth"
+# Browser origin(s) allowed to call this API (CORS). Defaults to the web app's
+# own origin so only the PWA can call it from a browser. Override with a
+# comma-separated ALLOWED_ORIGINS env var (e.g. to add http://localhost:8081
+# during local development). Non-browser clients (the native app) ignore CORS.
+_web = urllib.parse.urlsplit(WEB_APP_URL)
+ALLOWED_ORIGINS = os.getenv(
+    "ALLOWED_ORIGINS", f"{_web.scheme}://{_web.netloc}"
+).split(",")
 
 app = FastAPI(title="VeloGarage API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=os.getenv("ALLOWED_ORIGINS", "*").split(","),
+    allow_origins=ALLOWED_ORIGINS,
     allow_methods=["*"],
     allow_headers=["*"],
 )
