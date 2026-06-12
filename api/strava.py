@@ -2,6 +2,7 @@ import httpx
 from typing import Any
 
 STRAVA_TOKEN_URL = "https://www.strava.com/oauth/token"
+STRAVA_AUTHORIZE_URL = "https://www.strava.com/oauth/authorize"
 STRAVA_API_BASE = "https://www.strava.com/api/v3"
 
 

@@ -11,8 +11,8 @@ load_dotenv()
 
 CLIENT_ID = os.environ["STRAVA_CLIENT_ID"]
 CLIENT_SECRET = os.environ["STRAVA_CLIENT_SECRET"]
-# Public Railway URL — used to build the redirect_uri sent to Strava.
-# e.g. https://velogarage-api.up.railway.app
+# Public URL of this API (e.g. https://velogarage.onrender.com), used to
+# build the OAuth redirect_uri that Strava sends the user back to.
 API_PUBLIC_URL = os.environ["API_PUBLIC_URL"].rstrip("/")
 # Where to send the user after a *web* (PWA) login. The native app uses the
 # velogarage:// deep link instead. Defaults to the GitHub Pages web app.
@@ -20,6 +20,8 @@ WEB_APP_URL = os.environ.get(
     "WEB_APP_URL", "https://deyshift.github.io/velogarage/app"
 ).rstrip("/")
 STRAVA_SCOPE = "activity:read_all"
+# Deep link the native Expo app registers; web logins go to WEB_APP_URL instead.
+NATIVE_AUTH_REDIRECT = "velogarage://auth"
 
 app = FastAPI(title="VeloGarage API")
 
@@ -37,11 +39,7 @@ class RefreshRequest(BaseModel):
 
 @app.get("/api/auth/login")
 async def auth_login(state: str = Query("web")):
-    """
-    Start Strava OAuth. The web app just links here, so the client never needs
-    to know the client_id or build the authorize URL itself. `state` is echoed
-    back to the callback to decide where to send the user (web vs. native).
-    """
+    """Redirect the user to Strava's OAuth authorize page to start login."""
     params = urllib.parse.urlencode(
         {
             "client_id": CLIENT_ID,
@@ -52,7 +50,7 @@ async def auth_login(state: str = Query("web")):
             "state": state,
         }
     )
-    return RedirectResponse(f"https://www.strava.com/oauth/authorize?{params}")
+    return RedirectResponse(f"{strava.STRAVA_AUTHORIZE_URL}?{params}")
 
 
 @app.get("/api/auth/callback")
@@ -73,7 +71,7 @@ async def auth_callback(
     def redirect_back(query: str) -> RedirectResponse:
         if state == "web":
             return RedirectResponse(f"{WEB_APP_URL}/#{query}")
-        return RedirectResponse(f"velogarage://auth?{query}")
+        return RedirectResponse(f"{NATIVE_AUTH_REDIRECT}?{query}")
 
     if error or not code:
         return redirect_back(urllib.parse.urlencode({"error": error or "access_denied"}))
