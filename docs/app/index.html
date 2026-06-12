@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>VeloGarage</title>
+
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0d0d0d" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="VeloGarage" />
+  <link rel="apple-touch-icon" href="icon.png" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    :root { --accent:#10A37F; --bg:#0d0d0d; --surface:#181818; --text:#f0f0f0; --muted:#8a8a8a; --strava:#FC4C02; }
+    html, body { height: 100%; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased;
+    }
+    #app { min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      max-width: 480px; margin: 0 auto; padding: 32px calc(24px + env(safe-area-inset-left)) 32px; text-align: center; gap: 28px; }
+    .logo-emoji { font-size: 68px; }
+    h1 { font-size: 40px; font-weight: 900; letter-spacing: -1.5px; }
+    h1 span { color: var(--accent); }
+    .tag { color: var(--muted); font-size: 16px; max-width: 300px; line-height: 1.5; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+      background: var(--strava); color: #fff; font-size: 16px; font-weight: 700;
+      padding: 15px 26px; border-radius: 12px; text-decoration: none; border: none; cursor: pointer; width: 100%; max-width: 320px;
+    }
+    .btn:active { opacity: .85; }
+    .fine { font-size: 12px; color: #555; max-width: 320px; line-height: 1.5; }
+    .err { color: #ef4444; font-size: 13px; background: rgba(239,68,68,.1); border:1px solid rgba(239,68,68,.3); padding:10px 14px; border-radius:10px; max-width:320px; }
+
+    /* Logged-in */
+    .profile { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+    .avatar { width: 84px; height: 84px; border-radius: 50%; border: 3px solid var(--accent); object-fit: cover; background: var(--surface); }
+    .who { font-size: 22px; font-weight: 800; }
+    .connected { font-size: 13px; color: var(--accent); font-weight: 600; }
+    .card { background: var(--surface); border: 1px solid #232323; border-radius: 16px; padding: 20px; max-width: 340px; width: 100%; }
+    .check { font-size: 15px; line-height: 1.6; }
+    .check b { color: var(--accent); }
+    .next { font-size: 13px; color: var(--muted); margin-top: 10px; line-height: 1.5; }
+    .link { color: var(--muted); font-size: 13px; text-decoration: underline; cursor: pointer; background: none; border: none; margin-top: 4px; }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+
+  <script>
+    const API = "https://velogarage.onrender.com";
+    const LS = "velogarage_auth";
+
+    function fromHash() {
+      if (!location.hash || location.hash.length < 2) return null;
+      const p = new URLSearchParams(location.hash.slice(1));
+      if (p.get("error")) return { error: p.get("error") };
+      if (!p.get("access_token")) return null;
+      return {
+        access_token: p.get("access_token"),
+        refresh_token: p.get("refresh_token"),
+        expires_at: Number(p.get("expires_at")),
+        athlete_id: p.get("athlete_id"),
+        athlete_name: p.get("athlete_name"),
+        athlete_photo: p.get("athlete_photo"),
+      };
+    }
+    const loadAuth = () => { try { return JSON.parse(localStorage.getItem(LS)); } catch { return null; } };
+    const saveAuth = (a) => localStorage.setItem(LS, JSON.stringify(a));
+    const clearAuth = () => localStorage.removeItem(LS);
+
+    const app = document.getElementById("app");
+
+    function renderLogin(error) {
+      app.innerHTML = `
+        <div class="logo-emoji">🚲</div>
+        <h1><span>Velo</span>Garage</h1>
+        <div class="tag">Track your bikes. Know when to wrench.</div>
+        ${error ? `<div class="err">Login failed: ${error}. Please try again.</div>` : ""}
+        <a class="btn" href="${API}/api/auth/login">Connect with Strava</a>
+        <div class="fine">VeloGarage reads your ride data to calculate component wear. It never posts or modifies your Strava activities.</div>
+      `;
+    }
+
+    function renderProfile(auth) {
+      const photo = auth.athlete_photo && auth.athlete_photo !== "None"
+        ? `<img class="avatar" src="${auth.athlete_photo}" alt="" />`
+        : `<div class="avatar" style="display:grid;place-items:center;font-size:30px;font-weight:800;">${(auth.athlete_name||"?")[0]}</div>`;
+      app.innerHTML = `
+        <div class="profile">
+          ${photo}
+          <div class="who">${auth.athlete_name || "Athlete"}</div>
+          <div class="connected">● Connected to Strava</div>
+        </div>
+        <div class="card">
+          <div class="check"><b>✓ Login works!</b><br/>Your Strava account is connected.</div>
+          <div class="next">Next up: pulling in your bikes and mileage, then your component health bars — right here on this screen.</div>
+        </div>
+        <button class="link" id="logout">Disconnect</button>
+      `;
+      document.getElementById("logout").onclick = () => { clearAuth(); renderLogin(); };
+    }
+
+    // Boot: capture tokens from the redirect fragment if present
+    const hashAuth = fromHash();
+    if (hashAuth && !hashAuth.error) {
+      saveAuth(hashAuth);
+      history.replaceState(null, "", location.pathname + location.search);
+    }
+    const existing = loadAuth();
+    if (existing && existing.access_token) renderProfile(existing);
+    else renderLogin(hashAuth && hashAuth.error);
+  </script>
+</body>
+</html>
