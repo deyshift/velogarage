@@ -19,7 +19,11 @@ API_PUBLIC_URL = os.environ["API_PUBLIC_URL"].rstrip("/")
 WEB_APP_URL = os.environ.get(
     "WEB_APP_URL", "https://deyshift.github.io/velogarage/app"
 ).rstrip("/")
-STRAVA_SCOPE = "activity:read_all"
+# Strava OAuth scopes:
+#   activity:read_all  — read activities (incl. private)
+#   profile:read_all   — required for the athlete's bikes/gear to appear in
+#                        the /athlete response (otherwise only a summary)
+STRAVA_SCOPE = "activity:read_all,profile:read_all"
 # Deep link the native Expo app registers; web logins go to WEB_APP_URL instead.
 NATIVE_AUTH_REDIRECT = "velogarage://auth"
 # Browser origin(s) allowed to call this API (CORS). Defaults to the web app's
