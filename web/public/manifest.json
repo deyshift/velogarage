@@ -1,0 +1,13 @@
+{
+  "name": "VeloGarage",
+  "short_name": "VeloGarage",
+  "description": "Track your bikes. Know when to wrench.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0d0d0d",
+  "theme_color": "#10A37F",
+  "icons": [
+    { "src": "icon.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
