@@ -19,14 +19,29 @@ export function TopBar({ athlete, syncing, onSync, onDisconnect }: Props) {
       </div>
       <div className="top-right">
         <div className="units" role="group" aria-label="Distance units">
-          <button className={units === "mi" ? "on" : ""} onClick={() => setUnits("mi")}>
+          <button
+            type="button"
+            className={units === "mi" ? "on" : ""}
+            aria-pressed={units === "mi"}
+            onClick={() => setUnits("mi")}
+          >
             mi
           </button>
-          <button className={units === "km" ? "on" : ""} onClick={() => setUnits("km")}>
+          <button
+            type="button"
+            className={units === "km" ? "on" : ""}
+            aria-pressed={units === "km"}
+            onClick={() => setUnits("km")}
+          >
             km
           </button>
         </div>
-        <button className={`sync${syncing ? " spin" : ""}`} onClick={onSync} aria-label="Sync">
+        <button
+          type="button"
+          className={`sync${syncing ? " spin" : ""}`}
+          onClick={onSync}
+          aria-label="Sync"
+        >
           <span className="dot" />
           {syncing ? "Syncing…" : "Sync"}
         </button>

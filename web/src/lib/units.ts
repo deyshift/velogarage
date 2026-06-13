@@ -4,12 +4,20 @@ const LS = "velogarage_units";
 const METERS_PER = { mi: 1609.344, km: 1000 } as const;
 
 export function loadUnits(): Units {
-  const v = localStorage.getItem(LS);
-  return v === "km" || v === "mi" ? v : "mi"; // default to miles
+  try {
+    const v = localStorage.getItem(LS);
+    return v === "km" || v === "mi" ? v : "mi"; // default to miles
+  } catch {
+    return "mi"; // storage unavailable (private mode, disabled) — use default
+  }
 }
 
 export function saveUnits(u: Units) {
-  localStorage.setItem(LS, u);
+  try {
+    localStorage.setItem(LS, u);
+  } catch {
+    // storage unavailable / quota — preference just won't persist this session
+  }
 }
 
 /** Strava distances are in meters; format to the chosen unit (number only). */
