@@ -1,4 +1,5 @@
 import type { Athlete } from "../types";
+import { useUnits } from "../UnitsContext";
 
 interface Props {
   athlete: Athlete | null;
@@ -8,6 +9,7 @@ interface Props {
 }
 
 export function TopBar({ athlete, syncing, onSync, onDisconnect }: Props) {
+  const { units, setUnits } = useUnits();
   const initial = (athlete?.firstname || "?")[0];
   const photo = athlete?.profile_medium;
   return (
@@ -16,7 +18,15 @@ export function TopBar({ athlete, syncing, onSync, onDisconnect }: Props) {
         🚲 <span>Velo</span>Garage
       </div>
       <div className="top-right">
-        <button className={`sync${syncing ? " spin" : ""}`} onClick={onSync}>
+        <div className="units" role="group" aria-label="Distance units">
+          <button className={units === "mi" ? "on" : ""} onClick={() => setUnits("mi")}>
+            mi
+          </button>
+          <button className={units === "km" ? "on" : ""} onClick={() => setUnits("km")}>
+            km
+          </button>
+        </div>
+        <button className={`sync${syncing ? " spin" : ""}`} onClick={onSync} aria-label="Sync">
           <span className="dot" />
           {syncing ? "Syncing…" : "Sync"}
         </button>
