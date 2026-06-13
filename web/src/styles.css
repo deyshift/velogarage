@@ -122,7 +122,27 @@ body {
 .top-right {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+}
+.units {
+  display: inline-flex;
+  background: var(--surface);
+  border: 1px solid #2a2a2a;
+  border-radius: 999px;
+  overflow: hidden;
+}
+.units button {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 9px;
+  cursor: pointer;
+}
+.units button.on {
+  background: var(--accent);
+  color: #fff;
 }
 .sync {
   display: flex;
