@@ -145,6 +145,8 @@ async def get_activities(
         raise HTTPException(status_code=502, detail=str(e))
 
 
-@app.get("/health")
+# GET + HEAD so uptime monitors (e.g. UptimeRobot, which defaults to HEAD)
+# can ping it to keep the free Render instance from sleeping.
+@app.api_route("/health", methods=["GET", "HEAD"])
 async def health():
     return {"status": "ok"}
