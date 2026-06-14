@@ -6,6 +6,7 @@ import { Login } from "./components/Login";
 import { TopBar } from "./components/TopBar";
 import { Garage } from "./components/Garage";
 import { BikeDetail } from "./components/BikeDetail";
+import { GarageProvider } from "./GarageContext";
 
 export default function App() {
   const [authed, setAuthed] = useState<boolean>(() => !!loadAuth());
@@ -68,7 +69,7 @@ export default function App() {
   if (!authed) return <Login error={loginError} />;
 
   return (
-    <>
+    <GarageProvider>
       <TopBar
         athlete={athlete}
         syncing={syncing}
@@ -88,6 +89,6 @@ export default function App() {
           />
         )}
       </div>
-    </>
+    </GarageProvider>
   );
 }
