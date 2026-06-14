@@ -37,7 +37,11 @@ async def _command(*args: str) -> Any:
             json=list(args),
         )
         resp.raise_for_status()
-        return resp.json().get("result")
+        payload = resp.json()
+        # Upstash returns command errors as a 200 with an {"error": ...} body.
+        if "error" in payload:
+            raise RuntimeError(f"Upstash error: {payload['error']}")
+        return payload.get("result")
 
 
 def _key(athlete_id: int | str) -> str:
