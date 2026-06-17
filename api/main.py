@@ -193,6 +193,13 @@ async def write_garage(authorization: str = Header(...), garage: dict = Body(...
     return {"ok": True}
 
 
+@app.get("/api/storage-status")
+async def storage_status():
+    """Unauthenticated diagnostic: is the Upstash storage backend configured?
+    (Reports only whether the env vars are present, never their values.)"""
+    return {"configured": store.is_configured()}
+
+
 # GET + HEAD so uptime monitors (e.g. UptimeRobot, which defaults to HEAD)
 # can ping it to keep the free Render instance from sleeping.
 @app.api_route("/health", methods=["GET", "HEAD"])

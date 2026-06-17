@@ -16,11 +16,20 @@ export function BikeDetail({ bike, onBack }: { bike: Bike; onBack: () => void })
   const recent = garage.log.filter((l) => String(l.bikeId) === bikeId).slice(0, 8);
   const storageDown = error?.includes("503");
 
+  const saveError = (e: unknown) => {
+    const m = e instanceof Error ? e.message : "";
+    if (m.includes("503")) {
+      alert("Storage isn't configured on the server yet — your changes can't be saved.");
+    } else {
+      alert(`Couldn't save (${m || "unknown error"}). Please try again.`);
+    }
+  };
+
   const guard = async (fn: () => Promise<void>) => {
     try {
       await fn();
-    } catch {
-      alert("Couldn't save — please try again. (Is storage configured?)");
+    } catch (e) {
+      saveError(e);
     }
   };
 
@@ -28,8 +37,8 @@ export function BikeDetail({ bike, onBack }: { bike: Bike; onBack: () => void })
     try {
       await addComponent(c);
       setAdding(false); // only close (and discard inputs) once it actually saved
-    } catch {
-      alert("Couldn't save — please try again. (Is storage configured?)");
+    } catch (e) {
+      saveError(e);
     }
   };
 
