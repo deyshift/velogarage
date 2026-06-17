@@ -16,19 +16,9 @@ velogarage/
 - **web/** builds (`npm run build`) into **`docs/app/`**, which GitHub Pages serves as an installable web app at `https://deyshift.github.io/velogarage/app/`.
 - **api/** runs on Render and talks to Strava (it holds the Strava client secret) and to Upstash Redis (durable per-athlete storage).
 
-## Secrets / configuration
+## Configuration
 
-All of these are set as environment variables on the API host (Render → Environment):
-
-| Variable | Notes |
-|---|---|
-| `STRAVA_CLIENT_ID` | From strava.com/settings/api. Public, but the web app never needs it — the API builds the authorize URL. |
-| `STRAVA_CLIENT_SECRET` | **Server-side only.** Never ships to the browser. |
-| `API_PUBLIC_URL` | The API's public URL, e.g. `https://velogarage.onrender.com`. Strava's Authorization Callback Domain must match its hostname. |
-| `UPSTASH_REDIS_REST_URL` | Upstash Redis REST endpoint (durable garage storage). |
-| `UPSTASH_REDIS_REST_TOKEN` | Upstash Redis REST token. |
-| `WEB_APP_URL` | Optional. Where web logins return to; defaults to the GitHub Pages app. |
-| `ALLOWED_ORIGINS` | Optional. CORS allow-list; defaults to the web app's origin. |
+The API is configured entirely through environment variables — see **[`api/.env.example`](api/.env.example)** for the full list and descriptions. Locally, copy it to `api/.env`; in production, set the same variables on the host (Render → Environment).
 
 ## Getting started
 
