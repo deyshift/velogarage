@@ -8,73 +8,68 @@ VeloGarage connects to your Strava account to automatically calculate mileage on
 
 ```
 velogarage/
-├── app/   # Expo (React Native) — iOS, Android, Web
-└── api/   # FastAPI (Python) — Strava OAuth proxy
+├── web/    # React + Vite + TypeScript — installable PWA (the app)
+├── api/    # FastAPI (Python) — Strava OAuth proxy + garage storage
+└── docs/   # GitHub Pages site: landing page + the built PWA (docs/app/)
 ```
 
-## Secrets Management
+- **web/** builds (`npm run build`) into **`docs/app/`**, which GitHub Pages serves as an installable web app at `https://deyshift.github.io/velogarage/app/`.
+- **api/** runs on Render and talks to Strava (it holds the Strava client secret) and to Upstash Redis (durable per-athlete storage).
 
-| Secret | Where it lives | Notes |
-|---|---|---|
-| `STRAVA_CLIENT_ID` | GitHub Secrets + `api/.env` | Also safe as `EXPO_PUBLIC_STRAVA_CLIENT_ID` in the app (it's public) |
-| `STRAVA_CLIENT_SECRET` | GitHub Secrets + `api/.env` **only** | **Never** in the Expo app or its build environment |
-| `API_PUBLIC_URL` | GitHub Secrets + `api/.env` | e.g. `https://velogarage-api.up.railway.app` — set Strava's Authorization Callback Domain to this hostname |
-| `RAILWAY_TOKEN` | GitHub Secrets | Platform deploy token |
+## Secrets / configuration
 
-**Local development:** copy `.env.example` → `.env` in both `api/` and `app/`, fill in values.
+All of these are set as environment variables on the API host (Render → Environment):
 
-**CI/CD:** add `STRAVA_CLIENT_ID`, `STRAVA_CLIENT_SECRET`, and your deploy platform token to
-**GitHub → Settings → Secrets and variables → Actions**. The workflow at
-`.github/workflows/velogarage-api.yaml` injects them automatically on push to `main`.
+| Variable | Notes |
+|---|---|
+| `STRAVA_CLIENT_ID` | From strava.com/settings/api. Public, but the web app never needs it — the API builds the authorize URL. |
+| `STRAVA_CLIENT_SECRET` | **Server-side only.** Never ships to the browser. |
+| `API_PUBLIC_URL` | The API's public URL, e.g. `https://velogarage.onrender.com`. Strava's Authorization Callback Domain must match its hostname. |
+| `UPSTASH_REDIS_REST_URL` | Upstash Redis REST endpoint (durable garage storage). |
+| `UPSTASH_REDIS_REST_TOKEN` | Upstash Redis REST token. |
+| `WEB_APP_URL` | Optional. Where web logins return to; defaults to the GitHub Pages app. |
+| `ALLOWED_ORIGINS` | Optional. CORS allow-list; defaults to the web app's origin. |
 
----
+## Getting started
 
-## Getting Started
-
-### 1. Create a Strava API Application
+### 1. Create a Strava API application
 
 1. Go to https://www.strava.com/settings/api
-2. Create an application
-3. Set **Authorization Callback Domain** to `localhost`
-4. Note your **Client ID** and **Client Secret**
+2. Create an application.
+3. Set **Authorization Callback Domain** to your API hostname (`localhost` for local dev).
+4. Note your **Client ID** and **Client Secret**.
 
-### 2. Start the API
+### 2. Run the API
 
 ```bash
 cd api
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env
-# Fill in STRAVA_CLIENT_ID and STRAVA_CLIENT_SECRET in .env
+# Fill in STRAVA_CLIENT_ID, STRAVA_CLIENT_SECRET, API_PUBLIC_URL
+# (and UPSTASH_REDIS_REST_URL / _TOKEN to enable saving)
 uvicorn main:app --reload
 ```
 
-### 3. Start the Expo App
+### 3. Run the web app
 
 ```bash
-cd app
+cd web
 npm install
-cp .env.example .env
-# Set EXPO_PUBLIC_STRAVA_CLIENT_ID to your Strava Client ID
-# Set EXPO_PUBLIC_API_URL to your API URL (http://localhost:8000 for local)
-npx expo start
+npm run dev
 ```
 
-Scan the QR code with the Expo Go app, or press `i` for iOS simulator / `a` for Android.
+The web app points at the production API by default (`web/src/lib/api.ts`); change that constant to `http://localhost:8000` to develop against a local API.
 
-## Deploying the API
+## Deploying
 
-The FastAPI backend can be deployed to any platform that runs Python:
+- **API → Render:** Docker web service, root directory `api`. Set the env vars above. A `/health` endpoint (GET + HEAD) keeps it monitorable.
+- **Web → GitHub Pages:** `cd web && npm run build` emits to `docs/app/` (committed); Pages serves `/docs` on `main`.
+- **Storage → Upstash Redis:** create a database (or reuse one — keys are namespaced `velogarage:`), and set its REST URL + token on Render.
 
-- **Railway**: Connect your repo, set env vars, deploy automatically
-- **Render**: Free tier available, set `uvicorn main:app --host 0.0.0.0 --port $PORT` as start command
-- **Fly.io**: `fly launch` from the `api/` directory
+## Component intervals
 
-After deploying, update `EXPO_PUBLIC_API_URL` in your app's `.env` to the deployed URL.
-
-## Component Intervals
-
-| Component | Default Interval |
+| Component | Default interval |
 |---|---|
 | Chain (wax) | 400 km |
 | Chain (dry lube) | 175 km |
@@ -87,10 +82,10 @@ After deploying, update `EXPO_PUBLIC_API_URL` in your app's `.env` to the deploy
 | Brake pads | 2,000 km |
 | Rotors | 10,000 km |
 
-All intervals can be overridden per component.
+Defaults are editable per component, in miles or kilometers.
 
 ## Privacy
 
-- Strava tokens are stored encrypted on your device (iOS Keychain / Android Keystore)
-- Maintenance data is stored locally in SQLite — it never leaves your device
-- The API backend is stateless and stores nothing
+- The API holds the Strava client secret and acts as a stateless OAuth proxy.
+- Your maintenance data (components + service log) is stored in your Upstash database, keyed to your Strava athlete id — nothing else is collected.
+- Strava access/refresh tokens live in the browser (so you stay signed in) and are sent only to the API to talk to Strava on your behalf. VeloGarage only requests `activity:read_all` and `profile:read_all`; it never posts to or modifies your Strava account.
