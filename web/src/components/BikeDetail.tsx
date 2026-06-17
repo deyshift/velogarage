@@ -17,11 +17,12 @@ export function BikeDetail({ bike, onBack }: { bike: Bike; onBack: () => void })
   const storageDown = error?.includes("503");
 
   const saveError = (e: unknown) => {
-    const m = e instanceof Error ? e.message : "";
-    if (m.includes("503")) {
+    const m = e instanceof Error ? e.message : String(e);
+    const status = m.match(/_(\d{3})\b/)?.[1];
+    if (status === "503") {
       alert("Storage isn't configured on the server yet — your changes can't be saved.");
     } else {
-      alert(`Couldn't save (${m || "unknown error"}). Please try again.`);
+      alert(`Couldn't save${status ? ` (HTTP ${status})` : ""}. Please try again.`);
     }
   };
 
