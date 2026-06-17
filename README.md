@@ -20,8 +20,6 @@ velogarage/
 
 The API is configured entirely through environment variables — see **[`api/.env.example`](api/.env.example)** for the full list and descriptions. Locally, copy it to `api/.env`; in production, set the same variables on the host (Render → Environment).
 
-The only true secret is `STRAVA_CLIENT_SECRET`, which stays server-side and never reaches the browser.
-
 ## Getting started
 
 ### 1. Create a Strava API application
