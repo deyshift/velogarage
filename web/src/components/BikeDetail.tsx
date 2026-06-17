@@ -1,9 +1,38 @@
+import { useState } from "react";
 import type { Bike } from "../types";
+import type { Component } from "../lib/garage";
 import { useUnits } from "../UnitsContext";
+import { useGarage } from "../GarageContext";
+import { ComponentRow } from "./ComponentRow";
+import { AddComponentForm } from "./AddComponentForm";
 
 export function BikeDetail({ bike, onBack }: { bike: Bike; onBack: () => void }) {
   const { units, dist } = useUnits();
-  const total = `${dist(bike.distance)} ${units}`;
+  const { garage, loading, error, addComponent, serviceComponent, removeComponent } = useGarage();
+  const [adding, setAdding] = useState(false);
+
+  const bikeId = String(bike.id);
+  const components = garage.components.filter((c) => String(c.bikeId) === bikeId);
+  const recent = garage.log.filter((l) => String(l.bikeId) === bikeId).slice(0, 8);
+  const storageDown = error?.includes("503");
+
+  const guard = async (fn: () => Promise<void>) => {
+    try {
+      await fn();
+    } catch {
+      alert("Couldn't save — please try again. (Is storage configured?)");
+    }
+  };
+
+  const onAdd = async (c: Omit<Component, "id">) => {
+    try {
+      await addComponent(c);
+      setAdding(false); // only close (and discard inputs) once it actually saved
+    } catch {
+      alert("Couldn't save — please try again. (Is storage configured?)");
+    }
+  };
+
   return (
     <>
       <div className="detail-head">
@@ -12,18 +41,71 @@ export function BikeDetail({ bike, onBack }: { bike: Bike; onBack: () => void })
         </div>
         <div>
           <div className="detail-name">{bike.name || "Bike"}</div>
-          <div className="detail-dist">{total} total</div>
+          <div className="detail-dist">
+            {dist(bike.distance)} {units} total
+          </div>
         </div>
       </div>
-      <div className="card">
-        <div className="soon">
-          <b>Component tracking is next.</b>
-          <br />
-          Here you'll add this bike's components — chain, cassette, tires, brake pads, rotors — and
-          VeloGarage will track wear from its {total}, telling you what's due. (Phase 3, saved to
-          your Upstash database.)
+
+      {storageDown && (
+        <div className="err" style={{ marginBottom: 14 }}>
+          Storage isn't configured yet, so changes won't save. Add the Upstash keys to the API.
         </div>
-      </div>
+      )}
+
+      {adding ? (
+        <AddComponentForm
+          bikeId={bikeId}
+          bikeMeters={bike.distance}
+          onAdd={onAdd}
+          onCancel={() => setAdding(false)}
+        />
+      ) : (
+        <button type="button" className="btn-add" onClick={() => setAdding(true)}>
+          + Add component
+        </button>
+      )}
+
+      {loading && <div className="state">Loading components…</div>}
+
+      {!loading && components.length === 0 && !adding && (
+        <div className="empty-note">
+          No components yet. Add your chain, tires, cassette, etc. to start tracking wear from this
+          bike's mileage.
+        </div>
+      )}
+
+      {components.map((c) => (
+        <ComponentRow
+          key={c.id}
+          component={c}
+          bikeMeters={bike.distance}
+          onService={() => guard(() => serviceComponent(c.id, bike.distance, `${c.label} serviced`))}
+          onRemove={() => {
+            if (confirm(`Remove ${c.label}?`)) guard(() => removeComponent(c.id));
+          }}
+        />
+      ))}
+
+      {recent.length > 0 && (
+        <>
+          <div className="screen-label" style={{ marginTop: 24 }}>
+            Recent service
+          </div>
+          {recent.map((l) => (
+            <div className="log-item" key={l.id}>
+              <div className="log-ic">🔧</div>
+              <div className="log-main">
+                <div className="log-title">{l.label}</div>
+                <div className="log-sub">
+                  at {dist(l.atMeters)} {units}
+                </div>
+              </div>
+              <div className="log-when">{new Date(l.date).toLocaleDateString()}</div>
+            </div>
+          ))}
+        </>
+      )}
     </>
   );
 }

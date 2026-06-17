@@ -24,3 +24,11 @@ export function saveUnits(u: Units) {
 export function toDistance(meters: number | undefined, units: Units): string {
   return Math.round((meters || 0) / METERS_PER[units]).toLocaleString();
 }
+
+/** Convert a value the user typed (in their unit) to meters, and back. */
+export function toMeters(value: number, units: Units): number {
+  return value * METERS_PER[units];
+}
+export function fromMeters(meters: number, units: Units): number {
+  return meters / METERS_PER[units];
+}

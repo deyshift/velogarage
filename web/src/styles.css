@@ -14,6 +14,9 @@
   --text: #f0f0f0;
   --muted: #8a8a8a;
   --strava: #fc4c02;
+  --green: #22c55e;
+  --amber: #f59e0b;
+  --red: #ef4444;
 }
 
 html,
@@ -320,4 +323,207 @@ body {
   border-radius: 10px;
   cursor: pointer;
   margin-top: 14px;
+}
+
+/* Status badges on the garage list */
+.badge-good {
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--green);
+}
+.badge-warn {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--amber);
+}
+.badge-over {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--red);
+}
+
+/* Add-component button */
+.btn-add {
+  width: 100%;
+  background: rgba(16, 163, 127, 0.12);
+  border: 1px solid rgba(16, 163, 127, 0.4);
+  color: var(--accent);
+  font-size: 15px;
+  font-weight: 700;
+  padding: 13px;
+  border-radius: 14px;
+  cursor: pointer;
+  margin-bottom: 14px;
+}
+.btn-add:active {
+  opacity: 0.8;
+}
+.empty-note {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
+  padding: 8px 4px 16px;
+}
+
+/* Component rows */
+.comp {
+  background: var(--surface);
+  border: 1px solid #232323;
+  border-radius: 16px;
+  padding: 15px 16px;
+  margin-bottom: 11px;
+}
+.comp-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 9px;
+}
+.comp-label {
+  font-size: 15px;
+  font-weight: 600;
+}
+.comp-status {
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.s-good {
+  color: var(--green);
+}
+.s-warn {
+  color: var(--amber);
+}
+.s-over {
+  color: var(--red);
+}
+.bar-track {
+  height: 7px;
+  background: #2a2a2a;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+.comp-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+}
+.comp-meta {
+  font-size: 11px;
+  color: #666;
+}
+.comp-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.log-btn {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+  background: rgba(16, 163, 127, 0.12);
+  border: none;
+  padding: 7px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.log-btn:active {
+  opacity: 0.6;
+}
+.rm-btn {
+  font-size: 13px;
+  color: var(--muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 6px;
+}
+
+/* Add-component form */
+.form {
+  background: var(--surface);
+  border: 1px solid #232323;
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 14px;
+}
+.form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.form-row label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.form-row select,
+.form-row input {
+  background: var(--bg);
+  border: 1px solid #2f2f2f;
+  border-radius: 10px;
+  color: var(--text);
+  font-size: 15px;
+  padding: 11px 12px;
+  width: 100%;
+}
+.form-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+.form-actions button {
+  flex: 1;
+}
+.btn-primary {
+  background: var(--accent);
+  border: none;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 11px 18px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.btn-primary:disabled {
+  opacity: 0.5;
+}
+
+/* Maintenance log items */
+.log-item {
+  display: flex;
+  gap: 13px;
+  padding: 13px 4px;
+  border-bottom: 1px solid #1a1a1a;
+}
+.log-ic {
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  background: var(--surface);
+  display: grid;
+  place-items: center;
+  font-size: 17px;
+  flex-shrink: 0;
+}
+.log-main {
+  flex: 1;
+}
+.log-title {
+  font-size: 14px;
+  font-weight: 600;
+}
+.log-sub {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.log-when {
+  font-size: 11px;
+  color: #555;
+  white-space: nowrap;
 }
