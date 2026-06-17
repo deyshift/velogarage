@@ -1,11 +1,13 @@
 import os
 import urllib.parse
-from fastapi import FastAPI, Header, HTTPException, Query
+import httpx
+from fastapi import Body, FastAPI, Header, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 from dotenv import load_dotenv
 import strava
+import store
 
 load_dotenv()
 
@@ -143,6 +145,52 @@ async def get_activities(
         return await strava.get_activities(access_token, after, before, page, per_page)
     except Exception as e:
         raise HTTPException(status_code=502, detail=str(e))
+
+
+async def _athlete_id(authorization: str) -> int:
+    """Identify the caller by their Strava token (so one athlete can't read or
+    write another's garage). Returns the authenticated Strava athlete id."""
+    access_token = authorization.removeprefix("Bearer ")
+    try:
+        athlete = await strava.get_athlete(access_token)
+    except httpx.HTTPStatusError as e:
+        # 401 from Strava == bad/expired token; anything else is an upstream issue.
+        if e.response.status_code == 401:
+            raise HTTPException(status_code=401, detail="invalid Strava token")
+        raise HTTPException(status_code=502, detail="Strava error")
+    except Exception:
+        # network/timeout talking to Strava — upstream failure, not auth.
+        raise HTTPException(status_code=502, detail="Strava unavailable")
+    athlete_id = athlete.get("id")
+    if not athlete_id:
+        raise HTTPException(status_code=401, detail="could not identify athlete")
+    return athlete_id
+
+
+@app.get("/api/garage")
+async def read_garage(authorization: str = Header(...)):
+    """Return the caller's stored garage (components + maintenance log)."""
+    athlete_id = await _athlete_id(authorization)
+    try:
+        data = await store.get_garage(athlete_id)
+    except store.StoreNotConfigured:
+        raise HTTPException(status_code=503, detail="storage not configured")
+    except Exception:
+        raise HTTPException(status_code=502, detail="storage error")
+    return data or {}
+
+
+@app.put("/api/garage")
+async def write_garage(authorization: str = Header(...), garage: dict = Body(...)):
+    """Persist the caller's garage (components + maintenance log)."""
+    athlete_id = await _athlete_id(authorization)
+    try:
+        await store.set_garage(athlete_id, garage)
+    except store.StoreNotConfigured:
+        raise HTTPException(status_code=503, detail="storage not configured")
+    except Exception:
+        raise HTTPException(status_code=502, detail="storage error")
+    return {"ok": True}
 
 
 # GET + HEAD so uptime monitors (e.g. UptimeRobot, which defaults to HEAD)
