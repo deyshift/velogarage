@@ -527,3 +527,37 @@ body {
   color: #555;
   white-space: nowrap;
 }
+
+/* Component form heading + hint */
+.form-title {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+.form-hint {
+  font-size: 11px;
+  color: #666;
+  margin-top: 4px;
+}
+.form-row select:disabled {
+  opacity: 0.6;
+}
+
+/* Edit action on a component row */
+.edit-btn {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  background: var(--surface2, #222);
+  border: 1px solid #2f2f2f;
+  padding: 7px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.edit-btn:active {
+  opacity: 0.6;
+}
+/* Make the log row's delete sit at the end */
+.log-item .rm-btn {
+  align-self: center;
+}
