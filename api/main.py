@@ -1,5 +1,6 @@
 import os
 import urllib.parse
+import httpx
 from fastapi import Body, FastAPI, Header, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
@@ -152,8 +153,14 @@ async def _athlete_id(authorization: str) -> int:
     access_token = authorization.removeprefix("Bearer ")
     try:
         athlete = await strava.get_athlete(access_token)
+    except httpx.HTTPStatusError as e:
+        # 401 from Strava == bad/expired token; anything else is an upstream issue.
+        if e.response.status_code == 401:
+            raise HTTPException(status_code=401, detail="invalid Strava token")
+        raise HTTPException(status_code=502, detail="Strava error")
     except Exception:
-        raise HTTPException(status_code=401, detail="invalid Strava token")
+        # network/timeout talking to Strava — upstream failure, not auth.
+        raise HTTPException(status_code=502, detail="Strava unavailable")
     athlete_id = athlete.get("id")
     if not athlete_id:
         raise HTTPException(status_code=401, detail="could not identify athlete")
@@ -168,6 +175,8 @@ async def read_garage(authorization: str = Header(...)):
         data = await store.get_garage(athlete_id)
     except store.StoreNotConfigured:
         raise HTTPException(status_code=503, detail="storage not configured")
+    except Exception:
+        raise HTTPException(status_code=502, detail="storage error")
     return data or {}
 
 
@@ -179,6 +188,8 @@ async def write_garage(authorization: str = Header(...), garage: dict = Body(...
         await store.set_garage(athlete_id, garage)
     except store.StoreNotConfigured:
         raise HTTPException(status_code=503, detail="storage not configured")
+    except Exception:
+        raise HTTPException(status_code=502, detail="storage error")
     return {"ok": True}
 
 

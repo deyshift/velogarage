@@ -14,8 +14,6 @@ from typing import Any
 
 import httpx
 
-UPSTASH_URL = os.environ.get("UPSTASH_REDIS_REST_URL", "").rstrip("/")
-UPSTASH_TOKEN = os.environ.get("UPSTASH_REDIS_REST_TOKEN", "")
 KEY_PREFIX = "velogarage:garage:"
 
 
@@ -23,17 +21,28 @@ class StoreNotConfigured(Exception):
     """Raised when the Upstash env vars are not set."""
 
 
+def _config() -> tuple[str, str]:
+    """Read Upstash credentials lazily, so a .env loaded after import (and any
+    runtime env changes) are picked up."""
+    return (
+        os.environ.get("UPSTASH_REDIS_REST_URL", "").rstrip("/"),
+        os.environ.get("UPSTASH_REDIS_REST_TOKEN", ""),
+    )
+
+
 def is_configured() -> bool:
-    return bool(UPSTASH_URL and UPSTASH_TOKEN)
+    url, token = _config()
+    return bool(url and token)
 
 
 async def _command(*args: str) -> Any:
-    if not is_configured():
+    url, token = _config()
+    if not (url and token):
         raise StoreNotConfigured()
     async with httpx.AsyncClient() as client:
         resp = await client.post(
-            UPSTASH_URL,
-            headers={"Authorization": f"Bearer {UPSTASH_TOKEN}"},
+            url,
+            headers={"Authorization": f"Bearer {token}"},
             json=list(args),
         )
         resp.raise_for_status()
