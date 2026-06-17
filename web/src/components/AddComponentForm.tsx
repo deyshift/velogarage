@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CATALOG, LUBE_KM, LUBE_LABEL, catalogEntry } from "../lib/catalog";
 import type { Component, ComponentType, LubeType } from "../lib/garage";
 import { useUnits } from "../UnitsContext";
@@ -20,6 +20,18 @@ export function AddComponentForm({ bikeId, bikeMeters, onAdd, onCancel }: Props)
   );
   const [alreadyRidden, setAlreadyRidden] = useState<number>(0);
   const [saving, setSaving] = useState(false);
+
+  // If the units toggle changes while the form is open, convert the typed
+  // values to the new unit so submit() (which reads the current unit) is correct.
+  const prevUnits = useRef(units);
+  useEffect(() => {
+    const prev = prevUnits.current;
+    if (prev === units) return;
+    const convert = (v: number) => Math.round(fromMeters(toMeters(v, prev), units));
+    setInterval((v) => convert(v));
+    setAlreadyRidden((v) => convert(v));
+    prevUnits.current = units;
+  }, [units]);
 
   const entry = catalogEntry(type);
 

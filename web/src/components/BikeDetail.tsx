@@ -25,8 +25,12 @@ export function BikeDetail({ bike, onBack }: { bike: Bike; onBack: () => void })
   };
 
   const onAdd = async (c: Omit<Component, "id">) => {
-    await guard(() => addComponent(c));
-    setAdding(false);
+    try {
+      await addComponent(c);
+      setAdding(false); // only close (and discard inputs) once it actually saved
+    } catch {
+      alert("Couldn't save — please try again. (Is storage configured?)");
+    }
   };
 
   return (

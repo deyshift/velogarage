@@ -61,6 +61,7 @@ export function GarageProvider({ children }: { children: ReactNode }) {
       setError(null);
     } catch (e) {
       setGarage(prev);
+      setError(e instanceof Error ? e.message : "save_failed");
       throw e;
     }
   }, []);
@@ -77,18 +78,19 @@ export function GarageProvider({ children }: { children: ReactNode }) {
     (componentId: string, bikeMeters: number, label: string) => {
       const g = ref.current;
       const comp = g.components.find((c) => c.id === componentId);
+      if (!comp) return Promise.resolve(); // nothing to service
       const components = g.components.map((c) =>
         c.id === componentId ? { ...c, installMeters: bikeMeters } : c,
       );
       const entry: LogEntry = {
         id: uid(),
-        bikeId: comp?.bikeId ?? "",
+        bikeId: comp.bikeId,
         componentId,
         label,
         atMeters: bikeMeters,
         date: new Date().toISOString(),
       };
-      return persist({ components, log: [entry, ...g.log] });
+      return persist({ ...g, components, log: [entry, ...g.log] });
     },
     [persist],
   );
