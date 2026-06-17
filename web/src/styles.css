@@ -431,10 +431,6 @@ body {
     animation: none;
   }
 }
-.comp-overdue {
-  color: var(--red);
-  font-weight: 700;
-}
 .comp-foot {
   display: flex;
   justify-content: space-between;
