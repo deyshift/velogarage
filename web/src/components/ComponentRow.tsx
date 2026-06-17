@@ -11,10 +11,11 @@ interface Props {
   component: Component;
   bikeMeters: number;
   onService: () => void;
+  onEdit: () => void;
   onRemove: () => void;
 }
 
-export function ComponentRow({ component, bikeMeters, onService, onRemove }: Props) {
+export function ComponentRow({ component, bikeMeters, onService, onEdit, onRemove }: Props) {
   const { units, dist } = useUnits();
   const { wearMeters, pct, status } = computeWear(component, bikeMeters);
   const s = STATUS[status];
@@ -37,6 +38,9 @@ export function ComponentRow({ component, bikeMeters, onService, onRemove }: Pro
         <div className="comp-actions">
           <button type="button" className="log-btn" onClick={onService}>
             Log service
+          </button>
+          <button type="button" className="edit-btn" onClick={onEdit}>
+            Edit
           </button>
           <button type="button" className="rm-btn" onClick={onRemove} aria-label="Remove component">
             ✕

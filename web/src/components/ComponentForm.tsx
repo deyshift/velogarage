@@ -7,7 +7,8 @@ import { fromMeters, toMeters } from "../lib/units";
 interface Props {
   bikeId: string;
   bikeMeters: number;
-  onAdd: (c: Omit<Component, "id">) => Promise<void>;
+  initial?: Component; // present = edit mode
+  onSubmit: (fields: Omit<Component, "id">) => Promise<void>;
   onCancel: () => void;
 }
 
@@ -17,20 +18,22 @@ const num = (s: string) => {
   return Number.isFinite(n) ? n : 0;
 };
 
-export function AddComponentForm({ bikeId, bikeMeters, onAdd, onCancel }: Props) {
+export function ComponentForm({ bikeId, bikeMeters, initial, onSubmit, onCancel }: Props) {
   const { units } = useUnits();
-  const [type, setType] = useState<ComponentType>("chain");
-  const [lube, setLube] = useState<LubeType>("wax");
-  // Kept as strings so the fields can be cleared/edited freely (a numeric 0
-  // value can't be backspaced away on a controlled number input).
+  const isEdit = !!initial;
+
+  const [type, setType] = useState<ComponentType>(initial?.type ?? "chain");
+  const [lube, setLube] = useState<LubeType>(initial?.lube ?? "wax");
+  // Strings so the fields can be cleared/edited freely.
   const [interval, setInterval] = useState<string>(() =>
-    String(Math.round(fromMeters(400 * 1000, units))),
+    String(Math.round(fromMeters((initial?.intervalMeters ?? 400 * 1000) || 0, units))),
   );
-  const [alreadyRidden, setAlreadyRidden] = useState<string>("");
+  const [wear, setWear] = useState<string>(() =>
+    initial ? String(Math.round(fromMeters(Math.max(0, bikeMeters - initial.installMeters), units))) : "",
+  );
   const [saving, setSaving] = useState(false);
 
-  // If the units toggle changes while the form is open, convert the typed
-  // values to the new unit so submit() (which reads the current unit) is correct.
+  // Convert the typed values if the mi/km toggle changes while the form is open.
   const prevUnits = useRef(units);
   useEffect(() => {
     const prev = prevUnits.current;
@@ -38,7 +41,7 @@ export function AddComponentForm({ bikeId, bikeMeters, onAdd, onCancel }: Props)
     const convert = (s: string) =>
       s.trim() === "" ? "" : String(Math.round(fromMeters(toMeters(num(s), prev), units)));
     setInterval(convert);
-    setAlreadyRidden(convert);
+    setWear(convert);
     prevUnits.current = units;
   }, [units]);
 
@@ -52,23 +55,23 @@ export function AddComponentForm({ bikeId, bikeMeters, onAdd, onCancel }: Props)
 
   const changeType = (t: ComponentType) => {
     setType(t);
-    setInterval(defaultIntervalFor(t, lube));
+    setInterval(defaultIntervalFor(t, lube)); // add mode only (type is locked when editing)
   };
   const changeLube = (l: LubeType) => {
     setLube(l);
-    setInterval(defaultIntervalFor(type, l));
+    if (!isEdit) setInterval(defaultIntervalFor(type, l)); // don't clobber a custom interval on edit
   };
 
   async function submit() {
     setSaving(true);
     const label = entry.hasLube ? `${entry.label} (${LUBE_LABEL[lube]})` : entry.label;
     try {
-      await onAdd({
+      await onSubmit({
         bikeId,
         type,
         label,
         lube: entry.hasLube ? lube : undefined,
-        installMeters: Math.max(0, bikeMeters - toMeters(num(alreadyRidden), units)),
+        installMeters: Math.max(0, bikeMeters - toMeters(num(wear), units)),
         intervalMeters: toMeters(num(interval), units),
       });
     } finally {
@@ -78,9 +81,15 @@ export function AddComponentForm({ bikeId, bikeMeters, onAdd, onCancel }: Props)
 
   return (
     <div className="form">
+      <div className="form-title">{isEdit ? "Edit component" : "Add component"}</div>
+
       <div className="form-row">
         <label>Component</label>
-        <select value={type} onChange={(e) => changeType(e.target.value as ComponentType)}>
+        <select
+          value={type}
+          disabled={isEdit}
+          onChange={(e) => changeType(e.target.value as ComponentType)}
+        >
           {CATALOG.map((c) => (
             <option key={c.type} value={c.type}>
               {c.label}
@@ -113,14 +122,15 @@ export function AddComponentForm({ bikeId, bikeMeters, onAdd, onCancel }: Props)
       </div>
 
       <div className="form-row">
-        <label>Already ridden ({units})</label>
+        <label>{isEdit ? `Current wear (${units})` : `Already ridden (${units})`}</label>
         <input
           type="number"
           inputMode="numeric"
           placeholder="0"
-          value={alreadyRidden}
-          onChange={(e) => setAlreadyRidden(e.target.value)}
+          value={wear}
+          onChange={(e) => setWear(e.target.value)}
         />
+        {isEdit && <div className="form-hint">Set to 0 to reset (e.g. freshly waxed).</div>}
       </div>
 
       <div className="form-actions">
@@ -133,7 +143,7 @@ export function AddComponentForm({ bikeId, bikeMeters, onAdd, onCancel }: Props)
           onClick={submit}
           disabled={saving || num(interval) <= 0}
         >
-          {saving ? "Adding…" : "Add component"}
+          {saving ? "Saving…" : isEdit ? "Save changes" : "Add component"}
         </button>
       </div>
     </div>
