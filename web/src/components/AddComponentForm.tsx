@@ -11,14 +11,22 @@ interface Props {
   onCancel: () => void;
 }
 
+// Parse a free-text numeric input; blank/invalid -> 0.
+const num = (s: string) => {
+  const n = parseFloat(s);
+  return Number.isFinite(n) ? n : 0;
+};
+
 export function AddComponentForm({ bikeId, bikeMeters, onAdd, onCancel }: Props) {
   const { units } = useUnits();
   const [type, setType] = useState<ComponentType>("chain");
   const [lube, setLube] = useState<LubeType>("wax");
-  const [interval, setInterval] = useState<number>(() =>
-    Math.round(fromMeters(400 * 1000, units)),
+  // Kept as strings so the fields can be cleared/edited freely (a numeric 0
+  // value can't be backspaced away on a controlled number input).
+  const [interval, setInterval] = useState<string>(() =>
+    String(Math.round(fromMeters(400 * 1000, units))),
   );
-  const [alreadyRidden, setAlreadyRidden] = useState<number>(0);
+  const [alreadyRidden, setAlreadyRidden] = useState<string>("");
   const [saving, setSaving] = useState(false);
 
   // If the units toggle changes while the form is open, convert the typed
@@ -27,9 +35,10 @@ export function AddComponentForm({ bikeId, bikeMeters, onAdd, onCancel }: Props)
   useEffect(() => {
     const prev = prevUnits.current;
     if (prev === units) return;
-    const convert = (v: number) => Math.round(fromMeters(toMeters(v, prev), units));
-    setInterval((v) => convert(v));
-    setAlreadyRidden((v) => convert(v));
+    const convert = (s: string) =>
+      s.trim() === "" ? "" : String(Math.round(fromMeters(toMeters(num(s), prev), units)));
+    setInterval(convert);
+    setAlreadyRidden(convert);
     prevUnits.current = units;
   }, [units]);
 
@@ -38,7 +47,7 @@ export function AddComponentForm({ bikeId, bikeMeters, onAdd, onCancel }: Props)
   const defaultIntervalFor = (t: ComponentType, l: LubeType) => {
     const e = catalogEntry(t);
     const kmVal = e.hasLube ? LUBE_KM[l] : e.defaultKm;
-    return Math.round(fromMeters(kmVal * 1000, units));
+    return String(Math.round(fromMeters(kmVal * 1000, units)));
   };
 
   const changeType = (t: ComponentType) => {
@@ -59,8 +68,8 @@ export function AddComponentForm({ bikeId, bikeMeters, onAdd, onCancel }: Props)
         type,
         label,
         lube: entry.hasLube ? lube : undefined,
-        installMeters: Math.max(0, bikeMeters - toMeters(alreadyRidden, units)),
-        intervalMeters: toMeters(interval, units),
+        installMeters: Math.max(0, bikeMeters - toMeters(num(alreadyRidden), units)),
+        intervalMeters: toMeters(num(interval), units),
       });
     } finally {
       setSaving(false);
@@ -99,7 +108,7 @@ export function AddComponentForm({ bikeId, bikeMeters, onAdd, onCancel }: Props)
           type="number"
           inputMode="numeric"
           value={interval}
-          onChange={(e) => setInterval(Number(e.target.value))}
+          onChange={(e) => setInterval(e.target.value)}
         />
       </div>
 
@@ -108,8 +117,9 @@ export function AddComponentForm({ bikeId, bikeMeters, onAdd, onCancel }: Props)
         <input
           type="number"
           inputMode="numeric"
+          placeholder="0"
           value={alreadyRidden}
-          onChange={(e) => setAlreadyRidden(Number(e.target.value))}
+          onChange={(e) => setAlreadyRidden(e.target.value)}
         />
       </div>
 
@@ -121,7 +131,7 @@ export function AddComponentForm({ bikeId, bikeMeters, onAdd, onCancel }: Props)
           type="button"
           className="btn-primary"
           onClick={submit}
-          disabled={saving || interval <= 0}
+          disabled={saving || num(interval) <= 0}
         >
           {saving ? "Adding…" : "Add component"}
         </button>
