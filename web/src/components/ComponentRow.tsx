@@ -20,6 +20,9 @@ export function ComponentRow({ component, bikeMeters, onService, onEdit, onRemov
   const { wearMeters, pct, status } = computeWear(component, bikeMeters);
   const s = STATUS[status];
   const overdueMeters = wearMeters - component.intervalMeters;
+  // toDistance rounds to whole mi/km, so a small overage would read as "0";
+  // show "<1" in that case so the callout always conveys it's past interval.
+  const overdueLabel = dist(overdueMeters) === "0" ? "<1" : dist(overdueMeters);
   return (
     <div className="comp">
       <div className="comp-top">
@@ -38,9 +41,9 @@ export function ComponentRow({ component, bikeMeters, onService, onEdit, onRemov
       <div className="comp-foot">
         <div className="comp-meta">
           {dist(wearMeters)} / {dist(component.intervalMeters)} {units}
-          {status === "over" && (
+          {status === "over" && overdueMeters > 0 && (
             <span className="comp-overdue">
-              {" · "}Overdue by {dist(overdueMeters)} {units}
+              {" · "}Overdue by {overdueLabel} {units}
             </span>
           )}
         </div>
