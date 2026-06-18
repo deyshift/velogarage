@@ -27,7 +27,7 @@ export function ComponentRow({ component, bikeMeters, onService, onEdit, onRemov
       </div>
       <div className="bar-track">
         <div
-          className="bar-fill"
+          className={`bar-fill${status === "over" ? " bar-over" : ""}`}
           style={{ width: `${Math.min(pct * 100, 100)}%`, background: s.bar }}
         />
       </div>
