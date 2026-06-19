@@ -26,21 +26,6 @@ export interface Component {
   intervalMeters: number; // service interval
 }
 
-/**
- * Bring a stored component up to the current model. The old fixed `frontTire`/
- * `rearTire` types become a single `tire` type carrying a `position`, so
- * previously-saved garages keep working (and upgrade on the next save).
- */
-function migrateComponent(c: Component): Component {
-  // `type` is parsed JSON; legacy tire values predate the unified `tire` type.
-  const legacy = c.type as string;
-  if (legacy === "frontTire" || legacy === "rearTire") {
-    const position: TirePosition = legacy === "frontTire" ? "front" : "rear";
-    return { ...c, type: "tire", position, label: tireLabel(position) };
-  }
-  return c;
-}
-
 /** Canonical display label for a tire by position. */
 export function tireLabel(position: TirePosition): string {
   return position === "front" ? "Front tire" : "Rear tire";
@@ -68,8 +53,7 @@ export async function getGarage(): Promise<Garage> {
   const r = await fetch(`${API}/api/garage`, { headers: { Authorization: `Bearer ${token}` } });
   if (!r.ok) throw new Error(`garage_load_${r.status}`);
   const data = await r.json();
-  const components = (data.components ?? []).map(migrateComponent);
-  return { components, log: data.log ?? [] };
+  return { components: data.components ?? [], log: data.log ?? [] };
 }
 
 export async function putGarage(g: Garage): Promise<void> {
