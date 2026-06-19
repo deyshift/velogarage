@@ -25,7 +25,17 @@ export function Log({ bikes }: { bikes: Bike[] | null }) {
 
   const onDelete = (id: string) => {
     if (!confirm("Delete this log entry?")) return;
-    removeLogEntry(id).catch(() => alert("Couldn't delete. Please try again."));
+    // removeLogEntry rejects with `garage_save_<status>`; surface the same
+    // context BikeDetail does (503 = storage not configured, else HTTP code).
+    removeLogEntry(id).catch((e) => {
+      const m = e instanceof Error ? e.message : String(e);
+      const status = m.match(/_(\d{3})\b/)?.[1];
+      if (status === "503") {
+        alert("Storage isn't configured on the server yet — your changes can't be saved.");
+      } else {
+        alert(`Couldn't delete${status ? ` (HTTP ${status})` : ""}. Please try again.`);
+      }
+    });
   };
 
   return (
