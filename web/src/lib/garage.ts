@@ -26,17 +26,16 @@ export interface Component {
   intervalMeters: number; // service interval
 }
 
-// Legacy stored types, kept only so saved garages can be migrated on load.
-type LegacyComponent = Omit<Component, "type"> & { type: "frontTire" | "rearTire" };
-
 /**
  * Bring a stored component up to the current model. The old fixed `frontTire`/
  * `rearTire` types become a single `tire` type carrying a `position`, so
  * previously-saved garages keep working (and upgrade on the next save).
  */
-function migrateComponent(c: Component | LegacyComponent): Component {
-  if (c.type === "frontTire" || c.type === "rearTire") {
-    const position: TirePosition = c.type === "frontTire" ? "front" : "rear";
+function migrateComponent(c: Component): Component {
+  // `type` is parsed JSON; legacy tire values predate the unified `tire` type.
+  const legacy = c.type as string;
+  if (legacy === "frontTire" || legacy === "rearTire") {
+    const position: TirePosition = legacy === "frontTire" ? "front" : "rear";
     return { ...c, type: "tire", position, label: tireLabel(position) };
   }
   return c;
