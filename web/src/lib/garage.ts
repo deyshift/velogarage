@@ -5,10 +5,11 @@ export type ComponentType =
   | "chain"
   | "cassette"
   | "chainring"
-  | "frontTire"
-  | "rearTire"
+  | "tire"
   | "brakePads"
   | "rotors";
+
+export type TirePosition = "front" | "rear";
 
 export type LubeType = "wax" | "dry" | "wet" | "ceramic";
 
@@ -18,8 +19,32 @@ export interface Component {
   type: ComponentType;
   label: string;
   lube?: LubeType;
+  position?: TirePosition; // tires: front/rear
+  brand?: string; // tires: brand/model, free text
+  psi?: number; // tires: target pressure
   installMeters: number; // bike lifetime distance at install / last service
   intervalMeters: number; // service interval
+}
+
+// Legacy stored types, kept only so saved garages can be migrated on load.
+type LegacyComponent = Omit<Component, "type"> & { type: "frontTire" | "rearTire" };
+
+/**
+ * Bring a stored component up to the current model. The old fixed `frontTire`/
+ * `rearTire` types become a single `tire` type carrying a `position`, so
+ * previously-saved garages keep working (and upgrade on the next save).
+ */
+function migrateComponent(c: Component | LegacyComponent): Component {
+  if (c.type === "frontTire" || c.type === "rearTire") {
+    const position: TirePosition = c.type === "frontTire" ? "front" : "rear";
+    return { ...c, type: "tire", position, label: tireLabel(position) };
+  }
+  return c;
+}
+
+/** Canonical display label for a tire by position. */
+export function tireLabel(position: TirePosition): string {
+  return position === "front" ? "Front tire" : "Rear tire";
 }
 
 export interface LogEntry {
@@ -44,7 +69,8 @@ export async function getGarage(): Promise<Garage> {
   const r = await fetch(`${API}/api/garage`, { headers: { Authorization: `Bearer ${token}` } });
   if (!r.ok) throw new Error(`garage_load_${r.status}`);
   const data = await r.json();
-  return { components: data.components ?? [], log: data.log ?? [] };
+  const components = (data.components ?? []).map(migrateComponent);
+  return { components, log: data.log ?? [] };
 }
 
 export async function putGarage(g: Garage): Promise<void> {

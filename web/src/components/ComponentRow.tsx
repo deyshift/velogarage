@@ -19,10 +19,16 @@ export function ComponentRow({ component, bikeMeters, onService, onEdit, onRemov
   const { units, dist } = useUnits();
   const { wearMeters, pct, status } = computeWear(component, bikeMeters);
   const s = STATUS[status];
+  const sub = [component.brand, component.psi ? `${component.psi} PSI` : null]
+    .filter(Boolean)
+    .join(" · ");
   return (
     <div className="comp">
       <div className="comp-top">
-        <div className="comp-label">{component.label}</div>
+        <div>
+          <div className="comp-label">{component.label}</div>
+          {sub && <div className="comp-sub">{sub}</div>}
+        </div>
         <div className={`comp-status ${s.cls}`}>{s.txt}</div>
       </div>
       <div className="bar-track">
