@@ -111,7 +111,13 @@ export function GarageProvider({ children }: { children: ReactNode }) {
   const removeComponent = useCallback(
     (componentId: string) => {
       const g = ref.current;
-      return persist({ ...g, components: g.components.filter((c) => c.id !== componentId) });
+      // Drop the component and its service-log entries (the delete confirmation
+      // promises this). Entries with no componentId are left untouched.
+      return persist({
+        ...g,
+        components: g.components.filter((c) => c.id !== componentId),
+        log: g.log.filter((l) => l.componentId !== componentId),
+      });
     },
     [persist],
   );

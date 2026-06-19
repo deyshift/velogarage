@@ -363,12 +363,42 @@ body {
 }
 
 /* Component rows */
+/* Swipe-left wrapper: the .comp slides left to reveal a trash button behind it. */
+.comp-swipe {
+  position: relative;
+  margin-bottom: 11px;
+  border-radius: 16px;
+  overflow: hidden;
+}
+.comp-trash {
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: 80px;
+  border: none;
+  background: var(--red);
+  color: #fff;
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.comp-trash:active {
+  opacity: 0.8;
+}
 .comp {
   background: var(--surface);
   border: 1px solid #232323;
   border-radius: 16px;
   padding: 15px 16px;
   margin-bottom: 11px;
+}
+.comp-swipe .comp {
+  position: relative;
+  z-index: 1;
+  margin-bottom: 0;
+  touch-action: pan-y; /* we handle horizontal swipes; vertical scroll passes through */
+  transition: transform 0.2s ease;
 }
 .comp-top {
   display: flex;
