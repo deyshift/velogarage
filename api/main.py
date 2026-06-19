@@ -80,7 +80,10 @@ async def auth_callback(
         return RedirectResponse(f"{WEB_APP_URL}/#{query}")
 
     if error or not code:
-        return redirect_back(urllib.parse.urlencode({"error": error or "access_denied"}))
+        # `error` is an attacker-controllable query param; don't reflect it
+        # into the redirect URL. Strava only sends access_denied on this leg,
+        # so surface a fixed code the PWA can show a generic message for.
+        return redirect_back(urllib.parse.urlencode({"error": "access_denied"}))
 
     try:
         redirect_uri = f"{API_PUBLIC_URL}/api/auth/callback"
