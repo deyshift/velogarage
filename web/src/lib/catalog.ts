@@ -7,7 +7,9 @@ export interface CatalogEntry {
   hasLube?: boolean;
 }
 
-// Defaults from the README's interval table.
+// Defaults from the README's interval table. Exception: tires are tracked as
+// a single combined "Tires" entry, so its default is the rear-tire interval
+// rather than a distinct README row.
 export const CATALOG: CatalogEntry[] = [
   { type: "chain", label: "Chain", defaultKm: 400, hasLube: true },
   { type: "cassette", label: "Cassette", defaultKm: 8000 },
