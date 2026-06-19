@@ -6,7 +6,10 @@ import { Login } from "./components/Login";
 import { TopBar } from "./components/TopBar";
 import { Garage } from "./components/Garage";
 import { BikeDetail } from "./components/BikeDetail";
+import { Log } from "./components/Log";
 import { GarageProvider } from "./GarageContext";
+
+type View = "garage" | "log";
 
 export default function App() {
   const [authed, setAuthed] = useState<boolean>(() => !!loadAuth());
@@ -17,6 +20,7 @@ export default function App() {
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [openBike, setOpenBike] = useState<Bike | null>(null);
+  const [view, setView] = useState<View>("garage");
 
   // Capture tokens the API left in the URL fragment after the OAuth redirect.
   useEffect(() => {
@@ -64,6 +68,13 @@ export default function App() {
     setAthlete(null);
     setBikes(null);
     setOpenBike(null);
+    setView("garage");
+  };
+
+  // Tapping a nav tab; the Garage tab also pops back to the bike list.
+  const go = (v: View) => {
+    if (v === "garage") setOpenBike(null);
+    setView(v);
   };
 
   if (!authed) return <Login error={loginError} />;
@@ -77,7 +88,9 @@ export default function App() {
         onDisconnect={disconnect}
       />
       <div className="screen">
-        {openBike ? (
+        {view === "log" ? (
+          <Log bikes={bikes} />
+        ) : openBike ? (
           <BikeDetail bike={openBike} onBack={() => setOpenBike(null)} />
         ) : (
           <Garage
@@ -89,6 +102,24 @@ export default function App() {
           />
         )}
       </div>
+      <nav className="bottom-nav" aria-label="Main">
+        <button
+          type="button"
+          className={view === "garage" ? "on" : ""}
+          aria-current={view === "garage"}
+          onClick={() => go("garage")}
+        >
+          🚲<span>Garage</span>
+        </button>
+        <button
+          type="button"
+          className={view === "log" ? "on" : ""}
+          aria-current={view === "log"}
+          onClick={() => go("log")}
+        >
+          🔧<span>Log</span>
+        </button>
+      </nav>
     </GarageProvider>
   );
 }

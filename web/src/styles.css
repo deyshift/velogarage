@@ -587,3 +587,48 @@ body {
 .log-item .rm-btn {
   align-self: center;
 }
+
+/* Cross-bike Log view: header with optional per-bike filter */
+.log-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 6px 4px 14px;
+}
+.log-filter {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid #2f2f2f;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+/* Bottom navigation */
+.bottom-nav {
+  display: flex;
+  border-top: 1px solid #1f1f1f;
+  background: var(--bg);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.bottom-nav button {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 10px 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+.bottom-nav button.on {
+  color: var(--accent);
+}
+.bottom-nav button span {
+  letter-spacing: 0.3px;
+}
