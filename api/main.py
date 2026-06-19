@@ -16,8 +16,8 @@ CLIENT_SECRET = os.environ["STRAVA_CLIENT_SECRET"]
 # Public URL of this API (e.g. https://velogarage.onrender.com), used to
 # build the OAuth redirect_uri that Strava sends the user back to.
 API_PUBLIC_URL = os.environ["API_PUBLIC_URL"].rstrip("/")
-# Where to send the user after a *web* (PWA) login. The native app uses the
-# velogarage:// deep link instead. Defaults to the GitHub Pages web app.
+# Where to send the user after a (PWA) login. Defaults to the GitHub Pages
+# web app.
 WEB_APP_URL = os.environ.get(
     "WEB_APP_URL", "https://deyshift.github.io/velogarage/app"
 ).rstrip("/")
@@ -26,12 +26,10 @@ WEB_APP_URL = os.environ.get(
 #   profile:read_all   — required for the athlete's bikes/gear to appear in
 #                        the /athlete response (otherwise only a summary)
 STRAVA_SCOPE = "activity:read_all,profile:read_all"
-# Deep link the native Expo app registers; web logins go to WEB_APP_URL instead.
-NATIVE_AUTH_REDIRECT = "velogarage://auth"
 # Browser origin(s) allowed to call this API (CORS). Defaults to the web app's
 # own origin so only the PWA can call it from a browser. Override with a
 # comma-separated ALLOWED_ORIGINS env var (e.g. to add http://localhost:8081
-# during local development). Non-browser clients (the native app) ignore CORS.
+# during local development).
 _web = urllib.parse.urlsplit(WEB_APP_URL)
 ALLOWED_ORIGINS = os.getenv(
     "ALLOWED_ORIGINS", f"{_web.scheme}://{_web.netloc}"
@@ -52,7 +50,7 @@ class RefreshRequest(BaseModel):
 
 
 @app.get("/api/auth/login")
-async def auth_login(state: str = Query("web")):
+async def auth_login():
     """Redirect the user to Strava's OAuth authorize page to start login."""
     params = urllib.parse.urlencode(
         {
@@ -61,7 +59,6 @@ async def auth_login(state: str = Query("web")):
             "response_type": "code",
             "approval_prompt": "auto",
             "scope": STRAVA_SCOPE,
-            "state": state,
         }
     )
     return RedirectResponse(f"{strava.STRAVA_AUTHORIZE_URL}?{params}")
@@ -71,24 +68,22 @@ async def auth_login(state: str = Query("web")):
 async def auth_callback(
     code: str | None = Query(None),
     error: str | None = Query(None),
-    state: str = Query(""),
 ):
     """
-    Strava redirects here after the user authorises the app. `state` decides
-    where the user goes back to:
-      "web" -> the PWA, with tokens in the URL *fragment* (kept out of logs)
-      else  -> the native Expo app via the velogarage:// deep link
+    Strava redirects here after the user authorises the app. The tokens are
+    handed back to the PWA in the URL *fragment* (kept out of server logs).
     Set Authorization Callback Domain in strava.com/settings/api to the
     hostname of API_PUBLIC_URL.
     """
 
     def redirect_back(query: str) -> RedirectResponse:
-        if state == "web":
-            return RedirectResponse(f"{WEB_APP_URL}/#{query}")
-        return RedirectResponse(f"{NATIVE_AUTH_REDIRECT}?{query}")
+        return RedirectResponse(f"{WEB_APP_URL}/#{query}")
 
     if error or not code:
-        return redirect_back(urllib.parse.urlencode({"error": error or "access_denied"}))
+        # `error` is an attacker-controllable query param; don't reflect it
+        # into the redirect URL. Strava only sends access_denied on this leg,
+        # so surface a fixed code the PWA can show a generic message for.
+        return redirect_back(urllib.parse.urlencode({"error": "access_denied"}))
 
     try:
         redirect_uri = f"{API_PUBLIC_URL}/api/auth/callback"
