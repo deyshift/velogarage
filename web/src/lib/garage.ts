@@ -9,8 +9,6 @@ export type ComponentType =
   | "brakePads"
   | "rotors";
 
-export type TirePosition = "front" | "rear";
-
 export type LubeType = "wax" | "dry" | "wet" | "ceramic";
 
 export interface Component {
@@ -19,16 +17,10 @@ export interface Component {
   type: ComponentType;
   label: string;
   lube?: LubeType;
-  position?: TirePosition; // tires: front/rear
   brand?: string; // tires: brand/model, free text
   psi?: number; // tires: target pressure
   installMeters: number; // bike lifetime distance at install / last service
   intervalMeters: number; // service interval
-}
-
-/** Canonical display label for a tire by position. */
-export function tireLabel(position: TirePosition): string {
-  return position === "front" ? "Front tire" : "Rear tire";
 }
 
 export interface LogEntry {

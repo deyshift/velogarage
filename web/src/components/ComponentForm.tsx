@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { CATALOG, LUBE_KM, LUBE_LABEL, TIRE_DEFAULT_KM, catalogEntry } from "../lib/catalog";
-import type { Component, ComponentType, LubeType, TirePosition } from "../lib/garage";
-import { tireLabel } from "../lib/garage";
+import { CATALOG, LUBE_KM, LUBE_LABEL, catalogEntry } from "../lib/catalog";
+import type { Component, ComponentType, LubeType } from "../lib/garage";
 import { useUnits } from "../UnitsContext";
 import { fromMeters, toMeters } from "../lib/units";
 
@@ -25,7 +24,6 @@ export function ComponentForm({ bikeId, bikeMeters, initial, onSubmit, onCancel 
 
   const [type, setType] = useState<ComponentType>(initial?.type ?? "chain");
   const [lube, setLube] = useState<LubeType>(initial?.lube ?? "wax");
-  const [position, setPosition] = useState<TirePosition>(initial?.position ?? "rear");
   const [brand, setBrand] = useState<string>(initial?.brand ?? "");
   const [psi, setPsi] = useState<string>(initial?.psi != null ? String(initial.psi) : "");
   // Strings so the fields can be cleared/edited freely.
@@ -52,39 +50,30 @@ export function ComponentForm({ bikeId, bikeMeters, initial, onSubmit, onCancel 
   const entry = catalogEntry(type);
   const isTire = type === "tire";
 
-  const defaultIntervalFor = (t: ComponentType, l: LubeType, pos: TirePosition) => {
+  const defaultIntervalFor = (t: ComponentType, l: LubeType) => {
     const e = catalogEntry(t);
-    const kmVal = t === "tire" ? TIRE_DEFAULT_KM[pos] : e.hasLube ? LUBE_KM[l] : e.defaultKm;
+    const kmVal = e.hasLube ? LUBE_KM[l] : e.defaultKm;
     return String(Math.round(fromMeters(kmVal * 1000, units)));
   };
 
   const changeType = (t: ComponentType) => {
     setType(t);
-    setInterval(defaultIntervalFor(t, lube, position)); // add mode only (type is locked when editing)
+    setInterval(defaultIntervalFor(t, lube)); // add mode only (type is locked when editing)
   };
   const changeLube = (l: LubeType) => {
     setLube(l);
-    if (!isEdit) setInterval(defaultIntervalFor(type, l, position)); // don't clobber a custom interval on edit
-  };
-  const changePosition = (p: TirePosition) => {
-    setPosition(p);
-    if (!isEdit) setInterval(defaultIntervalFor("tire", lube, p));
+    if (!isEdit) setInterval(defaultIntervalFor(type, l)); // don't clobber a custom interval on edit
   };
 
   async function submit() {
     setSaving(true);
-    const label = isTire
-      ? tireLabel(position)
-      : entry.hasLube
-        ? `${entry.label} (${LUBE_LABEL[lube]})`
-        : entry.label;
+    const label = entry.hasLube ? `${entry.label} (${LUBE_LABEL[lube]})` : entry.label;
     try {
       await onSubmit({
         bikeId,
         type,
         label,
         lube: entry.hasLube ? lube : undefined,
-        position: isTire ? position : undefined,
         brand: isTire && brand.trim() ? brand.trim() : undefined,
         psi: isTire && num(psi) > 0 ? num(psi) : undefined,
         installMeters: Math.max(0, bikeMeters - toMeters(num(wear), units)),
@@ -129,16 +118,6 @@ export function ComponentForm({ bikeId, bikeMeters, initial, onSubmit, onCancel 
 
       {isTire && (
         <>
-          <div className="form-row">
-            <label>Position</label>
-            <select
-              value={position}
-              onChange={(e) => changePosition(e.target.value as TirePosition)}
-            >
-              <option value="front">Front</option>
-              <option value="rear">Rear</option>
-            </select>
-          </div>
           <div className="form-row">
             <label>Brand / model</label>
             <input

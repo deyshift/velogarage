@@ -1,4 +1,4 @@
-import type { ComponentType, LubeType, TirePosition } from "./garage";
+import type { ComponentType, LubeType } from "./garage";
 
 export interface CatalogEntry {
   type: ComponentType;
@@ -7,21 +7,19 @@ export interface CatalogEntry {
   hasLube?: boolean;
 }
 
-// Defaults from the README's interval table.
+// Defaults from the README's interval table. Exception: tires are tracked as
+// a single combined "Tires" entry, so its default is the rear-tire interval
+// rather than a distinct README row.
 export const CATALOG: CatalogEntry[] = [
   { type: "chain", label: "Chain", defaultKm: 400, hasLube: true },
   { type: "cassette", label: "Cassette", defaultKm: 8000 },
   { type: "chainring", label: "Chainring", defaultKm: 15000 },
-  { type: "tire", label: "Tire", defaultKm: 3000 },
+  // Both tires tracked as one component; the pair is replaced together and
+  // the rear (faster-wearing) tire is the limiting factor for the default.
+  { type: "tire", label: "Tires", defaultKm: 3000 },
   { type: "brakePads", label: "Brake pads", defaultKm: 2000 },
   { type: "rotors", label: "Rotors", defaultKm: 10000 },
 ];
-
-// Tire life varies hugely with compound, pressure and use, and no public
-// per-brand data is reliable enough to derive an interval from. The rear
-// tire wears roughly faster than the front (weight bias + drive torque), so
-// we seed sensible position-based defaults and let the rider override.
-export const TIRE_DEFAULT_KM: Record<TirePosition, number> = { front: 4000, rear: 3000 };
 
 export const LUBE_KM: Record<LubeType, number> = { wax: 400, dry: 175, wet: 400, ceramic: 650 };
 export const LUBE_LABEL: Record<LubeType, string> = {
