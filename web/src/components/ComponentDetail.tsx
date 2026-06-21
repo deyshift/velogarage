@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { type Component, type Status, computeWear } from "../lib/garage";
-import { LUBE_LABEL } from "../lib/catalog";
+import { type Component, type Status, computeWear, psiSummary } from "../lib/garage";
+import { LUBE_LABEL, serviceActionLabel } from "../lib/catalog";
 import { useUnits } from "../UnitsContext";
 import { ComponentForm } from "./ComponentForm";
 
@@ -35,9 +35,9 @@ export function ComponentDetail({
   const { units, dist } = useUnits();
   const { wearMeters, pct, status } = computeWear(component, bikeMeters, units);
   const s = STATUS[status];
-  const sub = [component.brand, component.psi ? `${component.psi} PSI` : null]
-    .filter(Boolean)
-    .join(" · ");
+  const sub = [component.brand, psiSummary(component)].filter(Boolean).join(" · ");
+  const isTire = component.type === "tire";
+  const actionLabel = serviceActionLabel(component.type);
 
   const [editingSettings, setEditingSettings] = useState(false);
   const [notes, setNotes] = useState(component.notes ?? "");
@@ -45,11 +45,12 @@ export function ComponentDetail({
   const notesDirty = notes !== (component.notes ?? "");
 
   const reset = () => {
-    const ok = confirm(
-      `Reset ${component.label}?\n\n` +
-        "This marks it freshly serviced — wear goes back to 0 and a service-log entry is added.",
-    );
-    if (ok) onReset();
+    const prompt = isTire
+      ? "Inspect and inflate tires?\n\n" +
+        "This marks them freshly inspected — wear goes back to 0 and a service-log entry is added."
+      : `Reset ${component.label}?\n\n` +
+        "This marks it freshly serviced — wear goes back to 0 and a service-log entry is added.";
+    if (confirm(prompt)) onReset();
   };
 
   const del = () => {
@@ -106,7 +107,7 @@ export function ComponentDetail({
       </div>
 
       <button type="button" className="cd-reset" onClick={reset}>
-        Reset
+        {actionLabel}
       </button>
 
       <div className="cd-section">
@@ -167,10 +168,16 @@ export function ComponentDetail({
                 <span>{component.brand}</span>
               </div>
             )}
-            {component.psi != null && (
+            {component.psiFront != null && (
               <div className="cd-setting">
-                <span>Target PSI</span>
-                <span>{component.psi}</span>
+                <span>Front PSI</span>
+                <span>{component.psiFront}</span>
+              </div>
+            )}
+            {component.psiRear != null && (
+              <div className="cd-setting">
+                <span>Rear PSI</span>
+                <span>{component.psiRear}</span>
               </div>
             )}
           </div>

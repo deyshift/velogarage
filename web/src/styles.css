@@ -480,6 +480,14 @@ body {
   padding: 11px 12px;
   width: 100%;
 }
+.form-pair {
+  display: flex;
+  gap: 10px;
+}
+.form-pair input {
+  flex: 1;
+  min-width: 0;
+}
 .form-actions {
   display: flex;
   gap: 10px;

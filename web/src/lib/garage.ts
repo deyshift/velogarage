@@ -19,7 +19,8 @@ export interface Component {
   label: string;
   lube?: LubeType;
   brand?: string; // tires: brand/model, free text
-  psi?: number; // tires: target pressure
+  psiFront?: number; // tires: target front pressure
+  psiRear?: number; // tires: target rear pressure
   notes?: string; // rider's free-text notes, edited in the component detail view
   installMeters: number; // bike lifetime distance at install / last service
   intervalMeters: number; // service interval
@@ -41,13 +42,32 @@ export interface Garage {
 
 export const emptyGarage = (): Garage => ({ components: [], log: [] });
 
+// Older tires stored a single `psi`. Carry it onto both front and rear so
+// existing garages keep showing a pressure after the split.
+function migrateComponent(c: Component & { psi?: number }): Component {
+  if (c.type === "tire" && c.psi != null && c.psiFront == null && c.psiRear == null) {
+    const { psi, ...rest } = c;
+    return { ...rest, psiFront: psi, psiRear: psi };
+  }
+  return c;
+}
+
 export async function getGarage(): Promise<Garage> {
   const token = await getToken();
   if (!token) throw new Error("no_token");
   const r = await fetch(`${API}/api/garage`, { headers: { Authorization: `Bearer ${token}` } });
   if (!r.ok) throw new Error(`garage_load_${r.status}`);
   const data = await r.json();
-  return { components: data.components ?? [], log: data.log ?? [] };
+  return { components: (data.components ?? []).map(migrateComponent), log: data.log ?? [] };
+}
+
+/** Short front/rear PSI summary for a tire, or null if neither is set. */
+export function psiSummary(c: Component): string | null {
+  const { psiFront: f, psiRear: r } = c;
+  if (f != null && r != null) return f === r ? `${f} PSI` : `${f}/${r} PSI`;
+  if (f != null) return `${f} PSI front`;
+  if (r != null) return `${r} PSI rear`;
+  return null;
 }
 
 export async function putGarage(g: Garage): Promise<void> {
