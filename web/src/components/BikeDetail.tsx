@@ -1,10 +1,25 @@
 import { useState } from "react";
 import type { Bike } from "../types";
-import type { Component } from "../lib/garage";
+import type { Component, LogEntry } from "../lib/garage";
 import { useUnits } from "../UnitsContext";
 import { useGarage } from "../GarageContext";
 import { ComponentRow } from "./ComponentRow";
 import { ComponentForm } from "./ComponentForm";
+import { ComponentDetail } from "./ComponentDetail";
+
+// How many recent service entries to show inline per bike; the full,
+// cross-bike history lives in the Log tab.
+const LOG_CAP = 10;
+
+// A human label for a calendar day, used to group the inline service log.
+function dayLabel(iso: string): string {
+  const d = new Date(iso);
+  const startOf = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const diff = Math.round((startOf(new Date()) - startOf(d)) / 86_400_000);
+  if (diff <= 0) return "Today";
+  if (diff === 1) return "Yesterday";
+  return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+}
 
 export function BikeDetail({ bike, onBack }: { bike: Bike; onBack: () => void }) {
   const { units, dist } = useUnits();
@@ -19,12 +34,28 @@ export function BikeDetail({ bike, onBack }: { bike: Bike; onBack: () => void })
     removeLogEntry,
   } = useGarage();
   const [adding, setAdding] = useState(false);
-  const [editing, setEditing] = useState<Component | null>(null);
+  const [openId, setOpenId] = useState<string | null>(null);
 
   const bikeId = String(bike.id);
   const components = garage.components.filter((c) => String(c.bikeId) === bikeId);
-  const recent = garage.log.filter((l) => String(l.bikeId) === bikeId).slice(0, 12);
   const storageDown = error?.includes("503");
+
+  // The open component is derived from live state so resets/edits reflect
+  // immediately; if it's been deleted, fall back to the component list.
+  const openComponent = openId ? components.find((c) => c.id === openId) ?? null : null;
+
+  // Bike's service log, newest first, grouped by day and capped inline.
+  const bikeLog = garage.log
+    .filter((l) => String(l.bikeId) === bikeId)
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const shown = bikeLog.slice(0, LOG_CAP);
+  const groups: { label: string; items: LogEntry[] }[] = [];
+  for (const l of shown) {
+    const label = dayLabel(l.date);
+    const last = groups[groups.length - 1];
+    if (last && last.label === label) last.items.push(l);
+    else groups.push({ label, items: [l] });
+  }
 
   const saveError = (e: unknown) => {
     const m = e instanceof Error ? e.message : String(e);
@@ -44,7 +75,7 @@ export function BikeDetail({ bike, onBack }: { bike: Bike; onBack: () => void })
     }
   };
 
-  // Add/edit share the form; only close it once the save actually succeeds.
+  // Add shares the form; only close it once the save actually succeeds.
   const onAdd = async (c: Omit<Component, "id">) => {
     try {
       await addComponent(c);
@@ -53,15 +84,28 @@ export function BikeDetail({ bike, onBack }: { bike: Bike; onBack: () => void })
       saveError(e);
     }
   };
-  const onEditSave = async (c: Omit<Component, "id">) => {
-    if (!editing) return;
-    try {
-      await updateComponent(editing.id, c);
-      setEditing(null);
-    } catch (e) {
-      saveError(e);
-    }
-  };
+
+  if (openComponent) {
+    return (
+      <ComponentDetail
+        component={openComponent}
+        bikeMeters={bike.distance}
+        onBack={() => setOpenId(null)}
+        onReset={() =>
+          guard(() =>
+            serviceComponent(openComponent.id, bike.distance, `${openComponent.label} serviced`),
+          )
+        }
+        // These reject on failure so the detail view can keep the editor open.
+        onSaveSettings={(patch) => updateComponent(openComponent.id, patch)}
+        onSaveNotes={(notes) => updateComponent(openComponent.id, { notes: notes || undefined })}
+        onDelete={() => {
+          setOpenId(null);
+          guard(() => removeComponent(openComponent.id));
+        }}
+      />
+    );
+  }
 
   return (
     <>
@@ -83,16 +127,7 @@ export function BikeDetail({ bike, onBack }: { bike: Bike; onBack: () => void })
         </div>
       )}
 
-      {/* Edit takes over the form area when a component is being edited. */}
-      {editing ? (
-        <ComponentForm
-          bikeId={bikeId}
-          bikeMeters={bike.distance}
-          initial={editing}
-          onSubmit={onEditSave}
-          onCancel={() => setEditing(null)}
-        />
-      ) : adding ? (
+      {adding ? (
         <ComponentForm
           bikeId={bikeId}
           bikeMeters={bike.distance}
@@ -107,64 +142,58 @@ export function BikeDetail({ bike, onBack }: { bike: Bike; onBack: () => void })
 
       {loading && <div className="state">Loading components…</div>}
 
-      {!loading && components.length === 0 && !adding && !editing && (
+      {!loading && components.length === 0 && !adding && (
         <div className="empty-note">
           No components yet. Add your chain, tires, cassette, etc. to start tracking wear from this
           bike's mileage.
         </div>
       )}
 
-      {!editing &&
-        components.map((c) => (
-          <ComponentRow
-            key={c.id}
-            component={c}
-            bikeMeters={bike.distance}
-            onService={() =>
-              guard(() => serviceComponent(c.id, bike.distance, `${c.label} serviced`))
-            }
-            onEdit={() => {
-              setAdding(false);
-              setEditing(c);
-            }}
-            onRemove={() => {
-              const ok = confirm(
-                `Delete ${c.label}?\n\n` +
-                  "This can't be undone. All of this component's data, including its " +
-                  "service-log entries, will be permanently removed.",
-              );
-              if (ok) guard(() => removeComponent(c.id));
-            }}
-          />
-        ))}
+      {components.map((c) => (
+        <ComponentRow
+          key={c.id}
+          component={c}
+          bikeMeters={bike.distance}
+          onOpen={() => setOpenId(c.id)}
+        />
+      ))}
 
-      {!editing && recent.length > 0 && (
+      {bikeLog.length > 0 && (
         <>
           <div className="screen-label" style={{ marginTop: 24 }}>
             Service log
           </div>
-          {recent.map((l) => (
-            <div className="log-item" key={l.id}>
-              <div className="log-ic">🔧</div>
-              <div className="log-main">
-                <div className="log-title">{l.label}</div>
-                <div className="log-sub">
-                  at {dist(l.atMeters)} {units}
+          {groups.map((g) => (
+            <div className="log-group" key={g.label}>
+              <div className="log-day">{g.label}</div>
+              {g.items.map((l) => (
+                <div className="log-item" key={l.id}>
+                  <div className="log-ic">🔧</div>
+                  <div className="log-main">
+                    <div className="log-title">{l.label}</div>
+                    <div className="log-sub">
+                      at {dist(l.atMeters)} {units}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className="rm-btn"
+                    aria-label="Delete log entry"
+                    onClick={() => {
+                      if (confirm("Delete this log entry?")) guard(() => removeLogEntry(l.id));
+                    }}
+                  >
+                    ✕
+                  </button>
                 </div>
-              </div>
-              <div className="log-when">{new Date(l.date).toLocaleDateString()}</div>
-              <button
-                type="button"
-                className="rm-btn"
-                aria-label="Delete log entry"
-                onClick={() => {
-                  if (confirm("Delete this log entry?")) guard(() => removeLogEntry(l.id));
-                }}
-              >
-                ✕
-              </button>
+              ))}
             </div>
           ))}
+          {bikeLog.length > LOG_CAP && (
+            <div className="log-more">
+              +{bikeLog.length - LOG_CAP} more · see the full history in the Log tab
+            </div>
+          )}
         </>
       )}
     </>

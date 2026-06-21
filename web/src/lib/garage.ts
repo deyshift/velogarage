@@ -19,6 +19,7 @@ export interface Component {
   lube?: LubeType;
   brand?: string; // tires: brand/model, free text
   psi?: number; // tires: target pressure
+  notes?: string; // rider's free-text notes, edited in the component detail view
   installMeters: number; // bike lifetime distance at install / last service
   intervalMeters: number; // service interval
 }

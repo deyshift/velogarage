@@ -363,44 +363,26 @@ body {
 }
 
 /* Component rows */
-/* Swipe-left container: a fixed-width red trash action sits behind the row,
-   revealed as the row slides left (handled in ComponentRow). */
-.comp-swipe {
-  position: relative;
-  margin-bottom: 11px;
-  border-radius: 16px;
-  overflow: hidden;
-}
-.comp-delete-action {
-  position: absolute;
-  inset: 0 0 0 auto;
-  width: 76px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--red);
-  border-radius: 16px;
-}
-.comp-trash {
-  background: none;
-  border: none;
-  color: #fff;
-  font-size: 20px;
-  line-height: 1;
-  cursor: pointer;
-  padding: 10px 14px;
-}
-.comp-trash:active {
-  opacity: 0.7;
-}
+/* The whole row is a tappable button that opens the component detail view. */
 .comp {
   position: relative;
   background: var(--surface);
   border: 1px solid #232323;
   border-radius: 16px;
   padding: 15px 16px;
-  /* Let vertical scrolling pass through while we capture horizontal swipes. */
-  touch-action: pan-y;
+  margin-bottom: 11px;
+}
+.comp-tap {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  transition: transform 0.12s;
+}
+.comp-tap:active {
+  transform: scale(0.99);
 }
 .comp-top {
   display: flex;
@@ -478,23 +460,10 @@ body {
   font-size: 11px;
   color: #666;
 }
-.comp-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.log-btn {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--accent);
-  background: rgba(16, 163, 127, 0.12);
-  border: none;
-  padding: 7px 14px;
-  border-radius: 999px;
-  cursor: pointer;
-}
-.log-btn:active {
-  opacity: 0.6;
+.comp-chev {
+  color: #555;
+  font-size: 20px;
+  line-height: 1;
 }
 .rm-btn {
   font-size: 13px;
@@ -503,14 +472,6 @@ body {
   border: none;
   cursor: pointer;
   padding: 4px 6px;
-}
-/* On touch devices the swipe-left trash is the delete affordance, so drop the
-   inline ✕ to avoid a redundant, cluttered second control. Scoped to the
-   component row's actions — the service-log delete still needs its ✕. */
-@media (pointer: coarse) {
-  .comp-actions .rm-btn {
-    display: none;
-  }
 }
 
 /* Add-component form */
@@ -648,6 +609,148 @@ body {
   border-radius: 999px;
   padding: 6px 12px;
   font-size: 12px;
+}
+
+/* Component detail view */
+.cd-card {
+  background: var(--surface);
+  border: 1px solid #232323;
+  border-radius: 16px;
+  padding: 18px;
+  margin-bottom: 14px;
+}
+.cd-status-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 12px;
+}
+.cd-status {
+  font-size: 14px;
+  font-weight: 700;
+}
+.cd-pct {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+.cd-bar {
+  height: 10px;
+}
+.cd-meta {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 12px;
+  font-weight: 600;
+}
+.cd-reset {
+  width: 100%;
+  background: rgba(16, 163, 127, 0.12);
+  border: 1px solid rgba(16, 163, 127, 0.4);
+  color: var(--accent);
+  font-size: 15px;
+  font-weight: 700;
+  padding: 14px;
+  border-radius: 14px;
+  cursor: pointer;
+  margin-bottom: 18px;
+}
+.cd-reset:active {
+  opacity: 0.8;
+}
+.cd-section {
+  margin-bottom: 18px;
+}
+.cd-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.cd-section-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  margin: 0 0 10px 4px;
+}
+.cd-section-head .cd-section-title {
+  margin-bottom: 0;
+}
+.cd-notes {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid #2f2f2f;
+  border-radius: 12px;
+  color: var(--text);
+  font: inherit;
+  font-size: 15px;
+  padding: 12px;
+  resize: vertical;
+  min-height: 70px;
+}
+.cd-notes-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+.cd-notes-actions .btn-primary {
+  min-width: 120px;
+}
+.cd-settings {
+  background: var(--surface);
+  border: 1px solid #232323;
+  border-radius: 14px;
+  padding: 4px 14px;
+}
+.cd-setting {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  font-size: 14px;
+  border-bottom: 1px solid #1f1f1f;
+}
+.cd-setting:last-child {
+  border-bottom: none;
+}
+.cd-setting span:first-child {
+  color: var(--muted);
+}
+.cd-setting span:last-child {
+  font-weight: 600;
+}
+.cd-delete {
+  width: 100%;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: var(--red);
+  font-size: 14px;
+  font-weight: 700;
+  padding: 13px;
+  border-radius: 14px;
+  cursor: pointer;
+  margin-top: 4px;
+}
+.cd-delete:active {
+  opacity: 0.8;
+}
+
+/* Grouped inline service log (per bike) */
+.log-group {
+  margin-bottom: 6px;
+}
+.log-day {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  padding: 10px 4px 2px;
+}
+.log-more {
+  font-size: 12px;
+  color: #666;
+  padding: 12px 4px;
 }
 
 /* Bottom navigation */
