@@ -427,32 +427,6 @@ body {
   border-radius: 4px;
   transition: width 0.4s ease;
 }
-/* Overdue (>100%): striped, darker-red, gently pulsing cap so it reads as
-   distinct from a bar that has merely reached its interval. */
-.bar-over {
-  background: repeating-linear-gradient(
-    45deg,
-    var(--red),
-    var(--red) 6px,
-    #a00 6px,
-    #a00 12px
-  ) !important;
-  animation: bar-pulse 1.4s ease-in-out infinite;
-}
-@keyframes bar-pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.6;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .bar-over {
-    animation: none;
-  }
-}
 .comp-foot {
   display: flex;
   justify-content: space-between;
