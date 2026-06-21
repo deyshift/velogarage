@@ -17,9 +17,13 @@ interface Props {
 // service (reset), notes, settings, and delete now live.
 export function ComponentRow({ component, bikeMeters, onOpen }: Props) {
   const { units, dist } = useUnits();
-  const { wearMeters, pct, status } = computeWear(component, bikeMeters, units);
+  const wear = computeWear(component, bikeMeters, units);
+  const { pct, status } = wear;
   const s = STATUS[status];
   const sub = [component.brand, psiSummary(component)].filter(Boolean).join(" · ");
+  const meta = wear.timeBased
+    ? `${wear.elapsedDays} / ${component.intervalDays} days`
+    : `${dist(wear.wearMeters)} / ${dist(component.intervalMeters)} ${units}`;
 
   return (
     <button type="button" className="comp comp-tap" onClick={onOpen}>
@@ -37,9 +41,7 @@ export function ComponentRow({ component, bikeMeters, onOpen }: Props) {
         />
       </div>
       <div className="comp-foot">
-        <div className="comp-meta">
-          {dist(wearMeters)} / {dist(component.intervalMeters)} {units}
-        </div>
+        <div className="comp-meta">{meta}</div>
         <div className="comp-chev">›</div>
       </div>
     </button>
