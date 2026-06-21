@@ -61,10 +61,12 @@ The web app points at the production API by default (`web/src/lib/api.ts`); chan
 
 | Component | Default interval |
 |---|---|
-| Chain (wax) | 400 km |
-| Chain (dry lube) | 175 km |
-| Chain (wet lube) | 400 km |
-| Chain (ceramic) | 650 km |
+| Chain — wax (hot melt) | 320 mi |
+| Chain — wax + Endurance chip | 465 mi |
+| Chain — wax + Speed chip | 125 mi |
+| Chain — dry lube | 125 mi |
+| Chain — wet lube | 182 mi |
+| Chain — ceramic | 405 mi |
 | Cassette | 8,000 km |
 | Chainring | 15,000 km |
 | Tires (inspect & inflate) | 62 mi (~100 km) |
@@ -72,6 +74,30 @@ The web app points at the production API by default (`web/src/lib/api.ts`); chan
 | Rotors | 10,000 km |
 
 Defaults are editable per component, in miles or kilometers.
+
+### How the chain default is chosen
+
+Riders rarely know the "right" chain interval, so VeloGarage pre-fills a
+researched, attribute-aware mileage you can override. The real signal is chain
+*wear* (replace ~0.5% for 11/12-speed), but that can't be measured when adding a
+component, so we key off what the rider knows up front — the lube, and for hot
+wax which [Silca additive chip](https://silca.cc/products/performance-chips) is
+in the pot:
+
+- **Wax (hot melt):** ~320 mi. Silca's Secret Chain Blend averages
+  [~250–350 mi per application](https://silca.cc/products/secret-chain-wax-blend).
+- **Wax + Endurance chip:** 465 mi (Silca claims up to ~800 mi; we keep a
+  conservative default).
+- **Wax + Speed chip:** 125 mi — a race-day additive good for events up to
+  ~200 km, trading longevity for efficiency.
+- **Dry lube:** 125 mi (reapply roughly every 100–150 mi in dry conditions).
+- **Wet lube:** 182 mi. **Ceramic:** 405 mi.
+
+Heuristic lives in [`web/src/lib/catalog.ts`](web/src/lib/catalog.ts)
+(`chainIntervalKm`). **Tires** stay on a flat inspect-and-inflate cadence
+(62 mi) rather than an attribute-aware *replacement* mileage: that cadence is
+about checking pressure, which doesn't vary by compound/use, so a category
+picker wouldn't improve the default.
 
 ## Privacy
 
