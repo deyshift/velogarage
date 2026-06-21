@@ -15,6 +15,7 @@ import {
   getGarage,
   putGarage,
 } from "./lib/garage";
+import { CATALOG } from "./lib/catalog";
 
 interface GarageContextValue {
   garage: Garage;
@@ -25,6 +26,8 @@ interface GarageContextValue {
   serviceComponent: (componentId: string, bikeMeters: number, label: string) => Promise<void>;
   removeComponent: (componentId: string) => Promise<void>;
   removeLogEntry: (logId: string) => Promise<void>;
+  // Seed the automatic whole-bike maintenance reminders for a bike if missing.
+  ensureFrameReminders: (bikeId: string) => Promise<void>;
 }
 
 const GarageContext = createContext<GarageContextValue | null>(null);
@@ -81,8 +84,14 @@ export function GarageProvider({ children }: { children: ReactNode }) {
       const g = ref.current;
       const comp = g.components.find((c) => c.id === componentId);
       if (!comp) return Promise.resolve(); // nothing to service
+      // Distance components reset by re-anchoring to the current odometer;
+      // time-based reminders reset by recording today as the last service.
+      const serviced =
+        comp.intervalDays != null
+          ? { installMeters: bikeMeters, installDate: new Date().toISOString() }
+          : { installMeters: bikeMeters };
       const components = g.components.map((c) =>
-        c.id === componentId ? { ...c, installMeters: bikeMeters } : c,
+        c.id === componentId ? { ...c, ...serviced } : c,
       );
       const entry: LogEntry = {
         id: uid(),
@@ -130,6 +139,38 @@ export function GarageProvider({ children }: { children: ReactNode }) {
     [persist],
   );
 
+  // Seed a bike's automatic reminders (torque check, annual service) exactly
+  // once. Seeded bikes are recorded in `seededBikes`, so reminders the rider
+  // later deletes stay deleted instead of reappearing on the next visit. Safe
+  // to call on every bike-detail mount: it's a no-op once the bike is seeded.
+  const ensureFrameReminders = useCallback(
+    (bikeId: string) => {
+      const g = ref.current;
+      const id = String(bikeId);
+      if (g.seededBikes.includes(id)) return Promise.resolve();
+      const have = new Set(
+        g.components.filter((c) => String(c.bikeId) === id).map((c) => c.type),
+      );
+      const now = new Date().toISOString();
+      const toAdd: Component[] = CATALOG.filter((e) => e.autoAdd && !have.has(e.type)).map((e) => ({
+        id: uid(),
+        bikeId: id,
+        type: e.type,
+        label: e.label,
+        installMeters: 0,
+        intervalMeters: 0,
+        intervalDays: e.defaultDays,
+        installDate: now,
+      }));
+      return persist({
+        ...g,
+        components: [...g.components, ...toAdd],
+        seededBikes: [...g.seededBikes, id],
+      });
+    },
+    [persist],
+  );
+
   return (
     <GarageContext.Provider
       value={{
@@ -141,6 +182,7 @@ export function GarageProvider({ children }: { children: ReactNode }) {
         serviceComponent,
         removeComponent,
         removeLogEntry,
+        ensureFrameReminders,
       }}
     >
       {children}
