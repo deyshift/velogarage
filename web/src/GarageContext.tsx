@@ -108,10 +108,16 @@ export function GarageProvider({ children }: { children: ReactNode }) {
     [persist],
   );
 
+  // Removing a component also drops its service-log entries — deleting a
+  // component is meant to wipe all of its data (see the delete confirmation).
   const removeComponent = useCallback(
     (componentId: string) => {
       const g = ref.current;
-      return persist({ ...g, components: g.components.filter((c) => c.id !== componentId) });
+      return persist({
+        ...g,
+        components: g.components.filter((c) => c.id !== componentId),
+        log: g.log.filter((l) => l.componentId !== componentId),
+      });
     },
     [persist],
   );

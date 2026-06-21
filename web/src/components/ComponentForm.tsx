@@ -74,7 +74,7 @@ export function ComponentForm({ bikeId, bikeMeters, initial, onSubmit, onCancel 
         type,
         label,
         lube: entry.hasLube ? lube : undefined,
-        brand: isTire && brand.trim() ? brand.trim() : undefined,
+        brand: brand.trim() ? brand.trim() : undefined,
         psi: isTire && num(psi) > 0 ? num(psi) : undefined,
         installMeters: Math.max(0, bikeMeters - toMeters(num(wear), units)),
         intervalMeters: toMeters(num(interval), units),
@@ -116,28 +116,27 @@ export function ComponentForm({ bikeId, bikeMeters, initial, onSubmit, onCancel 
         </div>
       )}
 
+      <div className="form-row">
+        <label>Brand / model</label>
+        <input
+          type="text"
+          placeholder={isTire ? "e.g. Continental GP5000" : "optional, e.g. Shimano XT"}
+          value={brand}
+          onChange={(e) => setBrand(e.target.value)}
+        />
+      </div>
+
       {isTire && (
-        <>
-          <div className="form-row">
-            <label>Brand / model</label>
-            <input
-              type="text"
-              placeholder="e.g. Continental GP5000"
-              value={brand}
-              onChange={(e) => setBrand(e.target.value)}
-            />
-          </div>
-          <div className="form-row">
-            <label>Target PSI</label>
-            <input
-              type="number"
-              inputMode="numeric"
-              placeholder="optional"
-              value={psi}
-              onChange={(e) => setPsi(e.target.value)}
-            />
-          </div>
-        </>
+        <div className="form-row">
+          <label>Target PSI</label>
+          <input
+            type="number"
+            inputMode="numeric"
+            placeholder="optional"
+            value={psi}
+            onChange={(e) => setPsi(e.target.value)}
+          />
+        </div>
       )}
 
       <div className="form-row">

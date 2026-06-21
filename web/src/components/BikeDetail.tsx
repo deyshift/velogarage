@@ -128,7 +128,12 @@ export function BikeDetail({ bike, onBack }: { bike: Bike; onBack: () => void })
               setEditing(c);
             }}
             onRemove={() => {
-              if (confirm(`Remove ${c.label}?`)) guard(() => removeComponent(c.id));
+              const ok = confirm(
+                `Delete ${c.label}?\n\n` +
+                  "This can't be undone. All of this component's data, including its " +
+                  "service-log entries, will be permanently removed.",
+              );
+              if (ok) guard(() => removeComponent(c.id));
             }}
           />
         ))}
