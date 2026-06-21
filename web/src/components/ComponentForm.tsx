@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { CATALOG, LUBE_KM, LUBE_LABEL, catalogEntry } from "../lib/catalog";
+import { CATALOG, LUBE_KM, LUBE_LABEL, catalogEntry, isTimeBased } from "../lib/catalog";
 import type { Component, ComponentType, LubeType } from "../lib/garage";
 import { useUnits } from "../UnitsContext";
 import { fromMeters, toMeters } from "../lib/units";
@@ -12,11 +12,17 @@ interface Props {
   onCancel: () => void;
 }
 
+const MS_PER_DAY = 86_400_000;
+
 // Parse a free-text numeric input; blank/invalid -> 0.
 const num = (s: string) => {
   const n = parseFloat(s);
   return Number.isFinite(n) ? n : 0;
 };
+
+// Whole days since an ISO timestamp (0 if unset/in the future).
+const daysSince = (iso?: string) =>
+  iso ? Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / MS_PER_DAY)) : 0;
 
 export function ComponentForm({ bikeId, bikeMeters, initial, onSubmit, onCancel }: Props) {
   const { units } = useUnits();
@@ -31,33 +37,43 @@ export function ComponentForm({ bikeId, bikeMeters, initial, onSubmit, onCancel 
   const [psiRear, setPsiRear] = useState<string>(
     initial?.psiRear != null ? String(initial.psiRear) : "",
   );
-  // Strings so the fields can be cleared/edited freely.
-  const [interval, setInterval] = useState<string>(() =>
-    String(Math.round(fromMeters((initial?.intervalMeters ?? 400 * 1000) || 0, units))),
-  );
-  const [wear, setWear] = useState<string>(() =>
-    initial ? String(Math.round(fromMeters(Math.max(0, bikeMeters - initial.installMeters), units))) : "",
-  );
+  // Strings so the fields can be cleared/edited freely. For time-based
+  // components the interval is in days; otherwise it's in the current distance
+  // unit. Likewise `wear` is "days since last done" vs. "distance ridden".
+  const [interval, setInterval] = useState<string>(() => {
+    if (initial?.intervalDays != null) return String(initial.intervalDays);
+    return String(Math.round(fromMeters((initial?.intervalMeters ?? 400 * 1000) || 0, units)));
+  });
+  const [wear, setWear] = useState<string>(() => {
+    if (!initial) return "";
+    if (initial.intervalDays != null) return String(daysSince(initial.installDate));
+    return String(Math.round(fromMeters(Math.max(0, bikeMeters - initial.installMeters), units)));
+  });
   const [saving, setSaving] = useState(false);
 
+  const timeBased = isTimeBased(type);
+
   // Convert the typed values if the mi/km toggle changes while the form is open.
+  // Time-based fields are in days, so they're left untouched.
   const prevUnits = useRef(units);
   useEffect(() => {
     const prev = prevUnits.current;
     if (prev === units) return;
+    prevUnits.current = units;
+    if (timeBased) return;
     const convert = (s: string) =>
       s.trim() === "" ? "" : String(Math.round(fromMeters(toMeters(num(s), prev), units)));
     setInterval(convert);
     setWear(convert);
-    prevUnits.current = units;
-  }, [units]);
+  }, [units, timeBased]);
 
   const entry = catalogEntry(type);
   const isTire = type === "tire";
 
   const defaultIntervalFor = (t: ComponentType, l: LubeType) => {
     const e = catalogEntry(t);
-    const kmVal = e.hasLube ? LUBE_KM[l] : e.defaultKm;
+    if (e.defaultDays != null) return String(e.defaultDays);
+    const kmVal = e.hasLube ? LUBE_KM[l] : (e.defaultKm ?? 0);
     return String(Math.round(fromMeters(kmVal * 1000, units)));
   };
 
@@ -72,23 +88,43 @@ export function ComponentForm({ bikeId, bikeMeters, initial, onSubmit, onCancel 
 
   async function submit() {
     setSaving(true);
-    const label = entry.hasLube ? `${entry.label} (${LUBE_LABEL[lube]})` : entry.label;
     try {
-      await onSubmit({
-        bikeId,
-        type,
-        label,
-        lube: entry.hasLube ? lube : undefined,
-        brand: brand.trim() ? brand.trim() : undefined,
-        psiFront: isTire && num(psiFront) > 0 ? num(psiFront) : undefined,
-        psiRear: isTire && num(psiRear) > 0 ? num(psiRear) : undefined,
-        installMeters: Math.max(0, bikeMeters - toMeters(num(wear), units)),
-        intervalMeters: toMeters(num(interval), units),
-      });
+      if (timeBased) {
+        // Back-date the install so "wear" days ago reads as the last service.
+        const installDate = new Date(Date.now() - num(wear) * MS_PER_DAY).toISOString();
+        await onSubmit({
+          bikeId,
+          type,
+          label: entry.label,
+          installMeters: bikeMeters,
+          intervalMeters: 0,
+          intervalDays: num(interval),
+          installDate,
+        });
+      } else {
+        await onSubmit({
+          bikeId,
+          type,
+          label: entry.label,
+          lube: entry.hasLube ? lube : undefined,
+          brand: brand.trim() ? brand.trim() : undefined,
+          psiFront: isTire && num(psiFront) > 0 ? num(psiFront) : undefined,
+          psiRear: isTire && num(psiRear) > 0 ? num(psiRear) : undefined,
+          installMeters: Math.max(0, bikeMeters - toMeters(num(wear), units)),
+          intervalMeters: toMeters(num(interval), units),
+        });
+      }
     } finally {
       setSaving(false);
     }
   }
+
+  const intervalUnit = timeBased ? "days" : units;
+  const wearLabel = timeBased
+    ? "Days since last done"
+    : isEdit
+      ? `Current wear (${units})`
+      : `Already ridden (${units})`;
 
   return (
     <div className="form">
@@ -122,15 +158,17 @@ export function ComponentForm({ bikeId, bikeMeters, initial, onSubmit, onCancel 
         </div>
       )}
 
-      <div className="form-row">
-        <label>Brand / model</label>
-        <input
-          type="text"
-          placeholder={isTire ? "e.g. Continental GP5000" : "optional, e.g. Shimano XT"}
-          value={brand}
-          onChange={(e) => setBrand(e.target.value)}
-        />
-      </div>
+      {!timeBased && (
+        <div className="form-row">
+          <label>Brand / model</label>
+          <input
+            type="text"
+            placeholder={isTire ? "e.g. Continental GP5000" : "optional, e.g. Shimano XT"}
+            value={brand}
+            onChange={(e) => setBrand(e.target.value)}
+          />
+        </div>
+      )}
 
       {isTire && (
         <div className="form-row">
@@ -157,7 +195,7 @@ export function ComponentForm({ bikeId, bikeMeters, initial, onSubmit, onCancel 
       )}
 
       <div className="form-row">
-        <label>Service interval ({units})</label>
+        <label>Service interval ({intervalUnit})</label>
         <input
           type="number"
           inputMode="numeric"
@@ -167,7 +205,7 @@ export function ComponentForm({ bikeId, bikeMeters, initial, onSubmit, onCancel 
       </div>
 
       <div className="form-row">
-        <label>{isEdit ? `Current wear (${units})` : `Already ridden (${units})`}</label>
+        <label>{wearLabel}</label>
         <input
           type="number"
           inputMode="numeric"
@@ -175,7 +213,11 @@ export function ComponentForm({ bikeId, bikeMeters, initial, onSubmit, onCancel 
           value={wear}
           onChange={(e) => setWear(e.target.value)}
         />
-        {isEdit && <div className="form-hint">Set to 0 to reset (e.g. freshly waxed).</div>}
+        {isEdit && (
+          <div className="form-hint">
+            {timeBased ? "Set to 0 to reset (just done today)." : "Set to 0 to reset (e.g. freshly waxed)."}
+          </div>
+        )}
       </div>
 
       <div className="form-actions">

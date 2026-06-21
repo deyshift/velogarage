@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Bike } from "../types";
 import type { Component, LogEntry } from "../lib/garage";
 import { useUnits } from "../UnitsContext";
@@ -38,6 +38,7 @@ export function BikeDetail({ bike, onBack }: { bike: Bike; onBack: () => void })
     serviceComponent,
     removeComponent,
     removeLogEntry,
+    ensureFrameReminders,
   } = useGarage();
   const [adding, setAdding] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -45,6 +46,13 @@ export function BikeDetail({ bike, onBack }: { bike: Bike; onBack: () => void })
   const bikeId = String(bike.id);
   const components = garage.components.filter((c) => String(c.bikeId) === bikeId);
   const storageDown = error?.includes("503");
+
+  // Seed this bike's automatic maintenance reminders once the garage has loaded.
+  // Idempotent, so a re-run after the resulting state change is a no-op; a save
+  // failure (e.g. storage down) sets `error` and stops it from retrying.
+  useEffect(() => {
+    if (!loading && !error) void ensureFrameReminders(bikeId).catch(() => {});
+  }, [loading, error, bikeId, ensureFrameReminders]);
 
   // The open component is derived from live state so resets/edits reflect
   // immediately; if it's been deleted, fall back to the component list.

@@ -59,19 +59,34 @@ The web app points at the production API by default (`web/src/lib/api.ts`); chan
 
 ## Component intervals
 
+Most components wear by distance, calculated from the bike's Strava mileage:
+
 | Component | Default interval |
 |---|---|
-| Chain (wax) | 400 km |
-| Chain (dry lube) | 175 km |
-| Chain (wet lube) | 400 km |
-| Chain (ceramic) | 650 km |
+| Clean & lube/wax drivetrain (wax) | 400 km |
+| Clean & lube/wax drivetrain (dry lube) | 175 km |
+| Clean & lube/wax drivetrain (wet lube) | 400 km |
+| Clean & lube/wax drivetrain (ceramic) | 650 km |
 | Cassette | 8,000 km |
 | Chainring | 15,000 km |
-| Tires (inspect & inflate) | 62 mi (~100 km) |
+| Inflate and Inspect Tires | 62 mi (~100 km) |
 | Brake pads | 2,000 km |
 | Rotors | 10,000 km |
 
 Defaults are editable per component, in miles or kilometers.
+
+### Whole-bike reminders (time-based)
+
+Two maintenance reminders are tracked on a calendar cadence instead of mileage,
+and are added automatically the first time you open each bike:
+
+| Reminder | Default interval |
+|---|---|
+| Check and torque bolts | 180 days |
+| Yearly inspection and service | 365 days |
+
+Marking one "done" records today as the last service and restarts the countdown.
+Their intervals are editable per bike, in days.
 
 ## Privacy
 
