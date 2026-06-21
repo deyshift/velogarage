@@ -132,16 +132,21 @@ export function GarageProvider({ children }: { children: ReactNode }) {
   );
 
   // Hide/unhide a bike from the garage. Bikes themselves come from Strava, so
-  // we only persist the set of hidden ids (deduped) in the garage doc.
+  // we only persist the set of hidden ids in the garage doc. Normalize through
+  // a Set so the stored list is deduped, and skip the write when nothing
+  // actually changes.
   const setBikeHidden = useCallback(
     (bikeId: string, hidden: boolean) => {
       const g = ref.current;
       const id = String(bikeId);
-      const has = g.hiddenBikeIds.includes(id);
-      if (hidden === has) return Promise.resolve(); // no change
-      const hiddenBikeIds = hidden
-        ? [...g.hiddenBikeIds, id]
-        : g.hiddenBikeIds.filter((x) => x !== id);
+      const set = new Set(g.hiddenBikeIds.map(String));
+      if (hidden) set.add(id);
+      else set.delete(id);
+      const hiddenBikeIds = [...set];
+      const unchanged =
+        hiddenBikeIds.length === g.hiddenBikeIds.length &&
+        hiddenBikeIds.every((x, i) => x === g.hiddenBikeIds[i]);
+      if (unchanged) return Promise.resolve();
       return persist({ ...g, hiddenBikeIds });
     },
     [persist],

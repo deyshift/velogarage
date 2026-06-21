@@ -93,8 +93,8 @@ export function BikeDetail({ bike, onBack }: { bike: Bike; onBack: () => void })
     }
   };
 
-  // Hide this bike from the garage, then pop back to the list where it moves
-  // into the "Hidden" section and can be unhidden later.
+  // Hide this bike from the garage, then pop back to the list. It can be
+  // unhidden later from the hidden-bikes menu in the top bar.
   const onHide = () => {
     if (!confirm(`Hide "${bike.name || "this bike"}" from your garage? You can unhide it later.`))
       return;
