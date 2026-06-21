@@ -14,7 +14,7 @@ export function BikeCard({ bike, onClick }: { bike: Bike; onClick: () => void })
   const { units, dist } = useUnits();
   const { garage } = useGarage();
   const components = garage.components.filter((c) => String(c.bikeId) === String(bike.id));
-  const status = worstStatus(components, bike.distance);
+  const status = worstStatus(components, bike.distance, units);
 
   return (
     <div className="bike-card" onClick={onClick}>

@@ -1,5 +1,6 @@
 import { API } from "./api";
 import { getToken } from "./auth";
+import { type Units, fromMeters } from "./units";
 
 export type ComponentType =
   | "chain"
@@ -68,19 +69,30 @@ export interface Wear {
   status: Status;
 }
 
-export function computeWear(component: Component, bikeMeters: number): Wear {
+export function computeWear(component: Component, bikeMeters: number, units: Units): Wear {
+  const interval = component.intervalMeters;
   const wearMeters = Math.max(0, bikeMeters - component.installMeters);
-  const pct = component.intervalMeters > 0 ? wearMeters / component.intervalMeters : 0;
-  const status: Status = pct >= 1 ? "over" : pct >= 0.8 ? "warn" : "good";
+  const pct = interval > 0 ? wearMeters / interval : 0;
+  // Judge "overdue" at the precision the UI shows (whole mi/km): a component
+  // displayed as "62 / 62" should read as overdue (red), not "service soon"
+  // (yellow), even though its raw ratio is a hair under 1 from rounding.
+  const wearShown = Math.round(fromMeters(wearMeters, units));
+  const intervalShown = Math.round(fromMeters(interval, units));
+  const over = interval > 0 && (pct >= 1 || (intervalShown > 0 && wearShown >= intervalShown));
+  const status: Status = over ? "over" : pct >= 0.8 ? "warn" : "good";
   return { wearMeters, pct, status };
 }
 
 /** Worst status among a set of components, for the garage list badge. */
-export function worstStatus(components: Component[], bikeMeters: number): Status | null {
+export function worstStatus(
+  components: Component[],
+  bikeMeters: number,
+  units: Units,
+): Status | null {
   let worst: Status | null = null;
   const rank = { good: 0, warn: 1, over: 2 } as const;
   for (const c of components) {
-    const s = computeWear(c, bikeMeters).status;
+    const s = computeWear(c, bikeMeters, units).status;
     if (worst === null || rank[s] > rank[worst]) worst = s;
   }
   return worst;
