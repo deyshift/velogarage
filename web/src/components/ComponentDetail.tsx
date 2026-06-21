@@ -33,7 +33,7 @@ export function ComponentDetail({
   onDelete,
 }: Props) {
   const { units, dist } = useUnits();
-  const { wearMeters, pct, status } = computeWear(component, bikeMeters);
+  const { wearMeters, pct, status } = computeWear(component, bikeMeters, units);
   const s = STATUS[status];
   const sub = [component.brand, component.psi ? `${component.psi} PSI` : null]
     .filter(Boolean)
