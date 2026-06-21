@@ -504,6 +504,14 @@ body {
   cursor: pointer;
   padding: 4px 6px;
 }
+/* On touch devices the swipe-left trash is the delete affordance, so drop the
+   inline ✕ to avoid a redundant, cluttered second control. Scoped to the
+   component row's actions — the service-log delete still needs its ✕. */
+@media (pointer: coarse) {
+  .comp-actions .rm-btn {
+    display: none;
+  }
+}
 
 /* Add-component form */
 .form {

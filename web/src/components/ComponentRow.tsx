@@ -55,7 +55,9 @@ export function ComponentRow({ component, bikeMeters, onService, onEdit, onRemov
   };
   const onTouchEnd = () => {
     setAnimating(true);
-    setOffset(offset <= -ACTION_W / 2 ? -ACTION_W : 0);
+    // Functional update so the snap decision uses the latest committed offset,
+    // not a value captured stale from this render's closure.
+    setOffset((o) => (o <= -ACTION_W / 2 ? -ACTION_W : 0));
   };
   const close = () => {
     setAnimating(true);
@@ -87,6 +89,7 @@ export function ComponentRow({ component, bikeMeters, onService, onEdit, onRemov
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
+        onTouchCancel={onTouchEnd}
       >
         <div className="comp-top">
           <div>
