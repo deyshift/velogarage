@@ -81,9 +81,9 @@ export function ComponentDetail({
   return (
     <>
       <div className="detail-head">
-        <div className="back" onClick={onBack}>
+        <button type="button" className="back" aria-label="Back" onClick={onBack}>
           ‹
-        </div>
+        </button>
         <div>
           <div className="detail-name">{component.label}</div>
           {sub && <div className="detail-dist">{sub}</div>}

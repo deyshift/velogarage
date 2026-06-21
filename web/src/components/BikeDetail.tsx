@@ -12,12 +12,18 @@ import { ComponentDetail } from "./ComponentDetail";
 const LOG_CAP = 10;
 
 // A human label for a calendar day, used to group the inline service log.
+// Compares calendar dates directly (not a 24h delta) so it stays correct
+// across DST transitions, where a local day can be 23 or 25 hours long.
 function dayLabel(iso: string): string {
   const d = new Date(iso);
-  const startOf = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
-  const diff = Math.round((startOf(new Date()) - startOf(d)) / 86_400_000);
-  if (diff <= 0) return "Today";
-  if (diff === 1) return "Yesterday";
+  const now = new Date();
+  const sameDay = (a: Date, b: Date) =>
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate();
+  if (sameDay(d, now)) return "Today";
+  const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+  if (sameDay(d, yesterday)) return "Yesterday";
   return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
 }
 
@@ -75,6 +81,17 @@ export function BikeDetail({ bike, onBack }: { bike: Bike; onBack: () => void })
     }
   };
 
+  // Like guard, but rethrows after alerting so the detail view can keep its
+  // editor open / notes dirty for a retry instead of silently swallowing.
+  const reportingSave = async (fn: () => Promise<void>) => {
+    try {
+      await fn();
+    } catch (e) {
+      saveError(e);
+      throw e;
+    }
+  };
+
   // Add shares the form; only close it once the save actually succeeds.
   const onAdd = async (c: Omit<Component, "id">) => {
     try {
@@ -96,9 +113,12 @@ export function BikeDetail({ bike, onBack }: { bike: Bike; onBack: () => void })
             serviceComponent(openComponent.id, bike.distance, `${openComponent.label} serviced`),
           )
         }
-        // These reject on failure so the detail view can keep the editor open.
-        onSaveSettings={(patch) => updateComponent(openComponent.id, patch)}
-        onSaveNotes={(notes) => updateComponent(openComponent.id, { notes: notes || undefined })}
+        // These alert and reject on failure so the detail view can keep the
+        // editor open / notes dirty for a retry.
+        onSaveSettings={(patch) => reportingSave(() => updateComponent(openComponent.id, patch))}
+        onSaveNotes={(notes) =>
+          reportingSave(() => updateComponent(openComponent.id, { notes: notes || undefined }))
+        }
         onDelete={() => {
           setOpenId(null);
           guard(() => removeComponent(openComponent.id));
@@ -110,9 +130,9 @@ export function BikeDetail({ bike, onBack }: { bike: Bike; onBack: () => void })
   return (
     <>
       <div className="detail-head">
-        <div className="back" onClick={onBack}>
+        <button type="button" className="back" aria-label="Back" onClick={onBack}>
           ‹
-        </div>
+        </button>
         <div>
           <div className="detail-name">{bike.name || "Bike"}</div>
           <div className="detail-dist">

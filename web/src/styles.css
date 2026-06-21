@@ -263,6 +263,9 @@ body {
   cursor: pointer;
   padding: 2px 6px;
   margin-left: -6px;
+  background: none;
+  border: none;
+  line-height: 1;
 }
 .detail-name {
   font-size: 22px;
