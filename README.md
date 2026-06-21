@@ -63,10 +63,10 @@ Most components wear by distance, calculated from the bike's Strava mileage:
 
 | Component | Default interval |
 |---|---|
-| Clean & lube/wax drivetrain (wax) | 400 km |
-| Clean & lube/wax drivetrain (dry lube) | 175 km |
-| Clean & lube/wax drivetrain (wet lube) | 400 km |
-| Clean & lube/wax drivetrain (ceramic) | 650 km |
+| Clean & wax drivetrain (wax) | 400 km |
+| Clean & lube drivetrain (dry lube) | 175 km |
+| Clean & lube drivetrain (wet lube) | 400 km |
+| Clean & lube drivetrain (ceramic) | 650 km |
 | Cassette | 8,000 km |
 | Chainring | 15,000 km |
 | Inflate and Inspect Tires | 62 mi (~100 km) |

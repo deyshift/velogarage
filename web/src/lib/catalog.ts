@@ -43,6 +43,16 @@ export function catalogEntry(type: ComponentType): CatalogEntry {
   return CATALOG.find((c) => c.type === type) ?? CATALOG[0];
 }
 
+// The label as displayed/stored for a component. The drivetrain reads as the
+// product actually used: "Clean & wax drivetrain" for wax, "Clean & lube
+// drivetrain" for any oil-based lube. Everything else uses its catalog label.
+export function componentLabel(type: ComponentType, lube?: LubeType): string {
+  if (type === "chain") {
+    return lube === "wax" ? "Clean & wax drivetrain" : "Clean & lube drivetrain";
+  }
+  return catalogEntry(type).label;
+}
+
 /** Whether a component type is tracked on a calendar (days) cadence. */
 export function isTimeBased(type: ComponentType): boolean {
   return catalogEntry(type).defaultDays != null;

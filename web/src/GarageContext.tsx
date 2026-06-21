@@ -139,13 +139,15 @@ export function GarageProvider({ children }: { children: ReactNode }) {
     [persist],
   );
 
-  // Add any missing auto-seeded reminders (torque check, annual service) for a
-  // bike. Idempotent: it only writes when something is actually missing, so it's
-  // safe to call on every bike-detail mount.
+  // Seed a bike's automatic reminders (torque check, annual service) exactly
+  // once. Seeded bikes are recorded in `seededBikes`, so reminders the rider
+  // later deletes stay deleted instead of reappearing on the next visit. Safe
+  // to call on every bike-detail mount: it's a no-op once the bike is seeded.
   const ensureFrameReminders = useCallback(
     (bikeId: string) => {
       const g = ref.current;
       const id = String(bikeId);
+      if (g.seededBikes.includes(id)) return Promise.resolve();
       const have = new Set(
         g.components.filter((c) => String(c.bikeId) === id).map((c) => c.type),
       );
@@ -160,8 +162,11 @@ export function GarageProvider({ children }: { children: ReactNode }) {
         intervalDays: e.defaultDays,
         installDate: now,
       }));
-      if (toAdd.length === 0) return Promise.resolve();
-      return persist({ ...g, components: [...g.components, ...toAdd] });
+      return persist({
+        ...g,
+        components: [...g.components, ...toAdd],
+        seededBikes: [...g.seededBikes, id],
+      });
     },
     [persist],
   );

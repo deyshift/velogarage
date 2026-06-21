@@ -1,6 +1,6 @@
 import { API } from "./api";
 import { getToken } from "./auth";
-import { catalogEntry } from "./catalog";
+import { componentLabel } from "./catalog";
 import { type Units, fromMeters } from "./units";
 
 export type ComponentType =
@@ -49,18 +49,21 @@ export interface LogEntry {
 export interface Garage {
   components: Component[];
   log: LogEntry[];
+  // Bike ids whose automatic frame reminders have already been seeded, so a
+  // reminder the rider deletes doesn't reappear on the next visit.
+  seededBikes: string[];
 }
 
-export const emptyGarage = (): Garage => ({ components: [], log: [] });
+export const emptyGarage = (): Garage => ({ components: [], log: [], seededBikes: [] });
 
 // Bring stored components up to date with the current catalog/shape:
-//  - Labels are derived from the component type (not user-editable), so always
-//    refresh them. This picks up renames like "Chain (Wax)" → "Clean & lube/wax
-//    drivetrain" and "Tires" → "Inflate and Inspect Tires".
+//  - Labels are derived from the component type (and lube), not user-editable,
+//    so always refresh them. This picks up renames like "Chain (Wax)" → "Clean
+//    & wax drivetrain" and "Tires" → "Inflate and Inspect Tires".
 //  - Older tires stored a single `psi`; carry it onto both front and rear so
 //    existing garages keep showing a pressure after the split.
 function migrateComponent(c: Component & { psi?: number }): Component {
-  const out: Component & { psi?: number } = { ...c, label: catalogEntry(c.type).label };
+  const out: Component & { psi?: number } = { ...c, label: componentLabel(c.type, c.lube) };
   if (out.type === "tire" && out.psi != null && out.psiFront == null && out.psiRear == null) {
     out.psiFront = out.psi;
     out.psiRear = out.psi;
@@ -75,7 +78,11 @@ export async function getGarage(): Promise<Garage> {
   const r = await fetch(`${API}/api/garage`, { headers: { Authorization: `Bearer ${token}` } });
   if (!r.ok) throw new Error(`garage_load_${r.status}`);
   const data = await r.json();
-  return { components: (data.components ?? []).map(migrateComponent), log: data.log ?? [] };
+  return {
+    components: (data.components ?? []).map(migrateComponent),
+    log: data.log ?? [],
+    seededBikes: data.seededBikes ?? [],
+  };
 }
 
 /** Short front/rear PSI summary for a tire, or null if neither is set. */
@@ -119,7 +126,10 @@ export function computeWear(
   // Time-based reminder: measure whole days since the last service.
   if (component.intervalDays != null) {
     const interval = component.intervalDays;
-    const start = component.installDate ? new Date(component.installDate).getTime() : now;
+    // A missing or unparseable install date falls back to "now" (0 days
+    // elapsed) so a corrupt value can't poison the status with NaN.
+    const parsed = component.installDate ? new Date(component.installDate).getTime() : now;
+    const start = Number.isFinite(parsed) ? parsed : now;
     const elapsedDays = Math.max(0, Math.floor((now - start) / MS_PER_DAY));
     const pct = interval > 0 ? elapsedDays / interval : 0;
     const over = interval > 0 && elapsedDays >= interval;

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { CATALOG, LUBE_KM, LUBE_LABEL, catalogEntry, isTimeBased } from "../lib/catalog";
+import { CATALOG, LUBE_KM, LUBE_LABEL, catalogEntry, componentLabel, isTimeBased } from "../lib/catalog";
 import type { Component, ComponentType, LubeType } from "../lib/garage";
 import { useUnits } from "../UnitsContext";
 import { fromMeters, toMeters } from "../lib/units";
@@ -20,9 +20,13 @@ const num = (s: string) => {
   return Number.isFinite(n) ? n : 0;
 };
 
-// Whole days since an ISO timestamp (0 if unset/in the future).
-const daysSince = (iso?: string) =>
-  iso ? Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / MS_PER_DAY)) : 0;
+// Whole days since an ISO timestamp (0 if unset, unparseable, or in the future).
+const daysSince = (iso?: string) => {
+  if (!iso) return 0;
+  const t = new Date(iso).getTime();
+  if (!Number.isFinite(t)) return 0;
+  return Math.max(0, Math.floor((Date.now() - t) / MS_PER_DAY));
+};
 
 export function ComponentForm({ bikeId, bikeMeters, initial, onSubmit, onCancel }: Props) {
   const { units } = useUnits();
@@ -91,11 +95,13 @@ export function ComponentForm({ bikeId, bikeMeters, initial, onSubmit, onCancel 
     try {
       if (timeBased) {
         // Back-date the install so "wear" days ago reads as the last service.
-        const installDate = new Date(Date.now() - num(wear) * MS_PER_DAY).toISOString();
+        // Clamp to >= 0 so a stray negative can't push the date into the future.
+        const daysAgo = Math.max(0, num(wear));
+        const installDate = new Date(Date.now() - daysAgo * MS_PER_DAY).toISOString();
         await onSubmit({
           bikeId,
           type,
-          label: entry.label,
+          label: componentLabel(type),
           installMeters: bikeMeters,
           intervalMeters: 0,
           intervalDays: num(interval),
@@ -105,7 +111,7 @@ export function ComponentForm({ bikeId, bikeMeters, initial, onSubmit, onCancel 
         await onSubmit({
           bikeId,
           type,
-          label: entry.label,
+          label: componentLabel(type, entry.hasLube ? lube : undefined),
           lube: entry.hasLube ? lube : undefined,
           brand: brand.trim() ? brand.trim() : undefined,
           psiFront: isTire && num(psiFront) > 0 ? num(psiFront) : undefined,
