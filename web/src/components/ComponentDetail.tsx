@@ -96,7 +96,7 @@ export function ComponentDetail({
         </div>
         <div className="bar-track cd-bar">
           <div
-            className={`bar-fill${status === "over" ? " bar-over" : ""}`}
+            className="bar-fill"
             style={{ width: `${Math.min(pct * 100, 100)}%`, background: s.bar }}
           />
         </div>
