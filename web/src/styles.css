@@ -266,43 +266,61 @@ body {
   font-size: 22px;
 }
 
-/* Hidden bikes section on the garage list */
-.hidden-bikes {
-  margin-top: 18px;
-  border-top: 1px solid #1f1f1f;
-  padding-top: 14px;
+/* Hidden-bikes menu in the top bar (interim home for unhide until Settings) */
+.hidden-menu {
+  position: relative;
 }
-.hidden-toggle {
-  width: 100%;
-  display: flex;
+.hidden-menu-btn {
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  background: none;
-  border: none;
+  gap: 3px;
+  background: var(--surface);
+  border: 1px solid #2a2a2a;
+  border-radius: 999px;
   color: var(--muted);
   font-size: 13px;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  padding: 6px 4px;
+  padding: 6px 10px;
   cursor: pointer;
 }
-.hidden-chev {
-  font-size: 12px;
+.hidden-count {
+  font-size: 11px;
 }
-.hidden-row {
+.menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+}
+.hidden-menu-panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 30;
+  min-width: 220px;
+  max-width: 280px;
+  background: var(--surface);
+  border: 1px solid #2f2f2f;
+  border-radius: 14px;
+  padding: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+.hidden-menu-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 6px 8px 8px;
+}
+.hidden-menu-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  background: var(--surface);
-  border: 1px solid #232323;
-  border-radius: 14px;
-  padding: 13px 16px;
-  margin-top: 10px;
+  padding: 8px;
 }
-.hidden-name {
-  font-size: 15px;
+.hidden-menu-name {
+  font-size: 14px;
   font-weight: 600;
   color: var(--text);
   white-space: nowrap;

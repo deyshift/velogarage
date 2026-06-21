@@ -1,5 +1,7 @@
+import { useState } from "react";
 import type { Athlete } from "../types";
 import { useUnits } from "../UnitsContext";
+import { useGarage } from "../GarageContext";
 
 interface Props {
   athlete: Athlete | null;
@@ -10,8 +12,23 @@ interface Props {
 
 export function TopBar({ athlete, syncing, onSync, onDisconnect }: Props) {
   const { units, setUnits } = useUnits();
+  const { garage, setBikeHidden } = useGarage();
+  const [menuOpen, setMenuOpen] = useState(false);
   const initial = (athlete?.firstname || "?")[0];
   const photo = athlete?.profile_medium;
+
+  // Interim home for unhiding bikes until the Settings screen (#26) absorbs it.
+  // Names come from the athlete's Strava gear; ids are matched against the
+  // persisted hidden set.
+  const hiddenIds = new Set(garage.hiddenBikeIds.map(String));
+  const hidden = (athlete?.bikes || []).filter((b) => hiddenIds.has(String(b.id)));
+
+  const unhide = (bikeId: string) => {
+    setBikeHidden(bikeId, false).catch(() =>
+      alert("Couldn't unhide that bike. Please try again."),
+    );
+  };
+
   return (
     <div className="topbar">
       <div className="brand">
@@ -36,6 +53,40 @@ export function TopBar({ athlete, syncing, onSync, onDisconnect }: Props) {
             km
           </button>
         </div>
+        {hidden.length > 0 && (
+          <div className="hidden-menu">
+            <button
+              type="button"
+              className="hidden-menu-btn"
+              aria-haspopup="menu"
+              aria-expanded={menuOpen}
+              aria-label={`Hidden bikes (${hidden.length})`}
+              onClick={() => setMenuOpen((v) => !v)}
+            >
+              🚲<span className="hidden-count">{hidden.length}</span>
+            </button>
+            {menuOpen && (
+              <>
+                <div className="menu-backdrop" onClick={() => setMenuOpen(false)} />
+                <div className="hidden-menu-panel" role="menu">
+                  <div className="hidden-menu-title">Hidden bikes</div>
+                  {hidden.map((b) => (
+                    <div className="hidden-menu-row" key={b.id} role="menuitem">
+                      <span className="hidden-menu-name">{b.name || "Bike"}</span>
+                      <button
+                        type="button"
+                        className="edit-btn"
+                        onClick={() => unhide(String(b.id))}
+                      >
+                        Unhide
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        )}
         <button
           type="button"
           className={`sync${syncing ? " spin" : ""}`}
