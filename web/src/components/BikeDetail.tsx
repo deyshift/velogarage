@@ -1,31 +1,11 @@
 import { useEffect, useState } from "react";
 import type { Bike } from "../types";
-import type { Component, LogEntry } from "../lib/garage";
+import type { Component } from "../lib/garage";
 import { useUnits } from "../UnitsContext";
 import { useGarage } from "../GarageContext";
 import { ComponentRow } from "./ComponentRow";
 import { ComponentForm } from "./ComponentForm";
 import { ComponentDetail } from "./ComponentDetail";
-
-// How many recent service entries to show inline per bike; the full,
-// cross-bike history lives in the Log tab.
-const LOG_CAP = 10;
-
-// A human label for a calendar day, used to group the inline service log.
-// Compares calendar dates directly (not a 24h delta) so it stays correct
-// across DST transitions, where a local day can be 23 or 25 hours long.
-function dayLabel(iso: string): string {
-  const d = new Date(iso);
-  const now = new Date();
-  const sameDay = (a: Date, b: Date) =>
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate();
-  if (sameDay(d, now)) return "Today";
-  const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
-  if (sameDay(d, yesterday)) return "Yesterday";
-  return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
-}
 
 export function BikeDetail({ bike, onBack }: { bike: Bike; onBack: () => void }) {
   const { units, dist } = useUnits();
@@ -37,7 +17,6 @@ export function BikeDetail({ bike, onBack }: { bike: Bike; onBack: () => void })
     updateComponent,
     serviceComponent,
     removeComponent,
-    removeLogEntry,
     setBikeHidden,
     ensureFrameReminders,
   } = useGarage();
@@ -58,19 +37,6 @@ export function BikeDetail({ bike, onBack }: { bike: Bike; onBack: () => void })
   // The open component is derived from live state so resets/edits reflect
   // immediately; if it's been deleted, fall back to the component list.
   const openComponent = openId ? components.find((c) => c.id === openId) ?? null : null;
-
-  // Bike's service log, newest first, grouped by day and capped inline.
-  const bikeLog = garage.log
-    .filter((l) => String(l.bikeId) === bikeId)
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  const shown = bikeLog.slice(0, LOG_CAP);
-  const groups: { label: string; items: LogEntry[] }[] = [];
-  for (const l of shown) {
-    const label = dayLabel(l.date);
-    const last = groups[groups.length - 1];
-    if (last && last.label === label) last.items.push(l);
-    else groups.push({ label, items: [l] });
-  }
 
   const saveError = (e: unknown) => {
     const m = e instanceof Error ? e.message : String(e);
@@ -195,45 +161,6 @@ export function BikeDetail({ bike, onBack }: { bike: Bike; onBack: () => void })
           onOpen={() => setOpenId(c.id)}
         />
       ))}
-
-      {bikeLog.length > 0 && (
-        <>
-          <div className="screen-label" style={{ marginTop: 24 }}>
-            Service log
-          </div>
-          {groups.map((g) => (
-            <div className="log-group" key={g.label}>
-              <div className="log-day">{g.label}</div>
-              {g.items.map((l) => (
-                <div className="log-item" key={l.id}>
-                  <div className="log-ic">🔧</div>
-                  <div className="log-main">
-                    <div className="log-title">{l.label}</div>
-                    <div className="log-sub">
-                      at {dist(l.atMeters)} {units}
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    className="rm-btn"
-                    aria-label="Delete log entry"
-                    onClick={() => {
-                      if (confirm("Delete this log entry?")) guard(() => removeLogEntry(l.id));
-                    }}
-                  >
-                    ✕
-                  </button>
-                </div>
-              ))}
-            </div>
-          ))}
-          {bikeLog.length > LOG_CAP && (
-            <div className="log-more">
-              +{bikeLog.length - LOG_CAP} more · see the full history in the Log tab
-            </div>
-          )}
-        </>
-      )}
 
       <button type="button" className="bike-hide" onClick={onHide}>
         Hide bike from garage
