@@ -48,8 +48,11 @@ export function ComponentDetail({
     const prompt = isTire
       ? "Inspect and inflate tires?\n\n" +
         "This marks them freshly inspected — wear goes back to 0 and a service-log entry is added."
-      : `Reset ${component.label}?\n\n` +
-        "This marks it freshly serviced — wear goes back to 0 and a service-log entry is added.";
+      : component.type === "chain"
+        ? `${actionLabel}?\n\n` +
+          "This marks it freshly serviced — wear goes back to 0 and a service-log entry is added."
+        : `Reset ${component.label}?\n\n` +
+          "This marks it freshly serviced — wear goes back to 0 and a service-log entry is added.";
     if (confirm(prompt)) onReset();
   };
 
