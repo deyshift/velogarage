@@ -58,6 +58,10 @@ export function ComponentDetail({
       prompt =
         `Mark "${component.label}" as done?\n\n` +
         "This records today as the last service — the countdown restarts and a service-log entry is added.";
+    } else if (component.type === "chain") {
+      prompt =
+        `${actionLabel}?\n\n` +
+        "This marks it freshly serviced — wear goes back to 0 and a service-log entry is added.";
     } else {
       prompt =
         `Reset ${component.label}?\n\n` +

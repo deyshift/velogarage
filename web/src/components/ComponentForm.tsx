@@ -1,5 +1,15 @@
 import { useEffect, useRef, useState } from "react";
-import { CATALOG, LUBE_KM, LUBE_LABEL, catalogEntry, componentLabel, isTimeBased } from "../lib/catalog";
+import {
+  ADDITIVE_LABEL,
+  CATALOG,
+  LUBE_LABEL,
+  additiveFromLabel,
+  catalogEntry,
+  chainIntervalKm,
+  componentLabel,
+  isTimeBased,
+  type ChainAdditive,
+} from "../lib/catalog";
 import type { Component, ComponentType, LubeType } from "../lib/garage";
 import { useUnits } from "../UnitsContext";
 import { fromMeters, toMeters } from "../lib/units";
@@ -34,6 +44,10 @@ export function ComponentForm({ bikeId, bikeMeters, initial, onSubmit, onCancel 
 
   const [type, setType] = useState<ComponentType>(initial?.type ?? "chain");
   const [lube, setLube] = useState<LubeType>(initial?.lube ?? "wax");
+  // Wax-only additive; drives the pre-filled interval but isn't persisted (the
+  // resulting interval is). On edit, recover it from the saved label so we don't
+  // silently strip the chip from the label on save.
+  const [additive, setAdditive] = useState<ChainAdditive>(() => additiveFromLabel(initial?.label));
   const [brand, setBrand] = useState<string>(initial?.brand ?? "");
   const [psiFront, setPsiFront] = useState<string>(
     initial?.psiFront != null ? String(initial.psiFront) : "",
@@ -46,7 +60,9 @@ export function ComponentForm({ bikeId, bikeMeters, initial, onSubmit, onCancel 
   // unit. Likewise `wear` is "days since last done" vs. "distance ridden".
   const [interval, setInterval] = useState<string>(() => {
     if (initial?.intervalDays != null) return String(initial.intervalDays);
-    return String(Math.round(fromMeters((initial?.intervalMeters ?? 400 * 1000) || 0, units)));
+    return String(
+      Math.round(fromMeters((initial?.intervalMeters ?? chainIntervalKm("wax") * 1000) || 0, units)),
+    );
   });
   const [wear, setWear] = useState<string>(() => {
     if (!initial) return "";
@@ -74,20 +90,27 @@ export function ComponentForm({ bikeId, bikeMeters, initial, onSubmit, onCancel 
   const entry = catalogEntry(type);
   const isTire = type === "tire";
 
-  const defaultIntervalFor = (t: ComponentType, l: LubeType) => {
+  const defaultIntervalFor = (t: ComponentType, l: LubeType, a: ChainAdditive) => {
     const e = catalogEntry(t);
     if (e.defaultDays != null) return String(e.defaultDays);
-    const kmVal = e.hasLube ? LUBE_KM[l] : (e.defaultKm ?? 0);
+    const kmVal = e.hasLube ? chainIntervalKm(l, a) : (e.defaultKm ?? 0);
     return String(Math.round(fromMeters(kmVal * 1000, units)));
   };
 
   const changeType = (t: ComponentType) => {
     setType(t);
-    setInterval(defaultIntervalFor(t, lube)); // add mode only (type is locked when editing)
+    setInterval(defaultIntervalFor(t, lube, additive)); // add mode only (type is locked when editing)
   };
   const changeLube = (l: LubeType) => {
+    // Additives only apply to hot wax; drop the chip when leaving wax.
+    const a = l === "wax" ? additive : "none";
     setLube(l);
-    if (!isEdit) setInterval(defaultIntervalFor(type, l)); // don't clobber a custom interval on edit
+    setAdditive(a);
+    if (!isEdit) setInterval(defaultIntervalFor(type, l, a)); // don't clobber a custom interval on edit
+  };
+  const changeAdditive = (a: ChainAdditive) => {
+    setAdditive(a);
+    if (!isEdit) setInterval(defaultIntervalFor(type, lube, a));
   };
 
   async function submit() {
@@ -111,7 +134,7 @@ export function ComponentForm({ bikeId, bikeMeters, initial, onSubmit, onCancel 
         await onSubmit({
           bikeId,
           type,
-          label: componentLabel(type, entry.hasLube ? lube : undefined),
+          label: componentLabel(type, entry.hasLube ? lube : undefined, additive),
           lube: entry.hasLube ? lube : undefined,
           brand: brand.trim() ? brand.trim() : undefined,
           psiFront: isTire && num(psiFront) > 0 ? num(psiFront) : undefined,
@@ -158,6 +181,19 @@ export function ComponentForm({ bikeId, bikeMeters, initial, onSubmit, onCancel 
             {(Object.keys(LUBE_LABEL) as LubeType[]).map((l) => (
               <option key={l} value={l}>
                 {LUBE_LABEL[l]}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {entry.hasLube && lube === "wax" && (
+        <div className="form-row">
+          <label>Wax additive</label>
+          <select value={additive} onChange={(e) => changeAdditive(e.target.value as ChainAdditive)}>
+            {(Object.keys(ADDITIVE_LABEL) as ChainAdditive[]).map((a) => (
+              <option key={a} value={a}>
+                {ADDITIVE_LABEL[a]}
               </option>
             ))}
           </select>
@@ -221,7 +257,9 @@ export function ComponentForm({ bikeId, bikeMeters, initial, onSubmit, onCancel 
         />
         {isEdit && (
           <div className="form-hint">
-            {timeBased ? "Set to 0 to reset (just done today)." : "Set to 0 to reset (e.g. freshly waxed)."}
+            {timeBased
+              ? "Set to 0 to reset (just done today)."
+              : "Set to 0 to reset (e.g. freshly waxed)."}
           </div>
         )}
       </div>

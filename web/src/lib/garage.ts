@@ -1,6 +1,6 @@
 import { API } from "./api";
 import { getToken } from "./auth";
-import { componentLabel } from "./catalog";
+import { additiveFromLabel, componentLabel } from "./catalog";
 import { type Units, fromMeters } from "./units";
 
 export type ComponentType =
@@ -63,7 +63,12 @@ export const emptyGarage = (): Garage => ({ components: [], log: [], seededBikes
 //  - Older tires stored a single `psi`; carry it onto both front and rear so
 //    existing garages keep showing a pressure after the split.
 function migrateComponent(c: Component & { psi?: number }): Component {
-  const out: Component & { psi?: number } = { ...c, label: componentLabel(c.type, c.lube) };
+  const out: Component & { psi?: number } = {
+    ...c,
+    // Re-derive the label, preserving the wax additive chip encoded in the old
+    // label so a chain's chip (and thus its interval rationale) survives.
+    label: componentLabel(c.type, c.lube, additiveFromLabel(c.label)),
+  };
   if (out.type === "tire" && out.psi != null && out.psiFront == null && out.psiRear == null) {
     out.psiFront = out.psi;
     out.psiRear = out.psi;

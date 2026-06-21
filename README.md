@@ -63,10 +63,12 @@ Most components wear by distance, calculated from the bike's Strava mileage:
 
 | Component | Default interval |
 |---|---|
-| Clean & wax drivetrain (wax) | 400 km |
-| Clean & lube drivetrain (dry lube) | 175 km |
-| Clean & lube drivetrain (wet lube) | 400 km |
-| Clean & lube drivetrain (ceramic) | 650 km |
+| Clean & wax drivetrain (hot melt) | 320 mi |
+| Clean & wax drivetrain (+ Endurance chip) | 465 mi |
+| Clean & wax drivetrain (+ Speed chip) | 125 mi |
+| Clean & lube drivetrain (dry lube) | 125 mi |
+| Clean & lube drivetrain (wet lube) | 182 mi |
+| Clean & lube drivetrain (ceramic) | 405 mi |
 | Cassette | 8,000 km |
 | Chainring | 15,000 km |
 | Inflate and Inspect Tires | 62 mi (~100 km) |
@@ -74,6 +76,30 @@ Most components wear by distance, calculated from the bike's Strava mileage:
 | Rotors | 10,000 km |
 
 Defaults are editable per component, in miles or kilometers.
+
+### How the chain default is chosen
+
+Riders rarely know the "right" chain interval, so VeloGarage pre-fills a
+researched, attribute-aware mileage you can override. The real signal is chain
+*wear* (replace ~0.5% for 11/12-speed), but that can't be measured when adding a
+component, so we key off what the rider knows up front — the lube, and for hot
+wax which [Silca additive chip](https://silca.cc/products/performance-chips) is
+in the pot:
+
+- **Wax (hot melt):** ~320 mi. Silca's Secret Chain Blend averages
+  [~250–350 mi per application](https://silca.cc/products/secret-chain-wax-blend).
+- **Wax + Endurance chip:** 465 mi (Silca claims up to ~800 mi; we keep a
+  conservative default).
+- **Wax + Speed chip:** 125 mi — a race-day additive good for events up to
+  ~200 km, trading longevity for efficiency.
+- **Dry lube:** 125 mi (reapply roughly every 100–150 mi in dry conditions).
+- **Wet lube:** 182 mi. **Ceramic:** 405 mi.
+
+Heuristic lives in [`web/src/lib/catalog.ts`](web/src/lib/catalog.ts)
+(`chainIntervalKm`). **Tires** stay on a flat inspect-and-inflate cadence
+(62 mi) rather than an attribute-aware *replacement* mileage: that cadence is
+about checking pressure, which doesn't vary by compound/use, so a category
+picker wouldn't improve the default.
 
 ### Whole-bike reminders (time-based)
 
