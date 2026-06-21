@@ -93,7 +93,6 @@ export function ComponentDetail({
       <div className="cd-card">
         <div className="cd-status-row">
           <span className={`cd-status ${s.cls}`}>{s.txt}</span>
-          <span className="cd-pct">{Math.round(pct * 100)}%</span>
         </div>
         <div className="bar-track cd-bar">
           <div
@@ -107,7 +106,7 @@ export function ComponentDetail({
       </div>
 
       <button type="button" className="cd-reset" onClick={reset}>
-        ↺ Reset · mark serviced
+        Reset
       </button>
 
       <div className="cd-section">
@@ -126,7 +125,7 @@ export function ComponentDetail({
             disabled={!notesDirty || savingNotes}
             onClick={saveNotes}
           >
-            {savingNotes ? "Saving…" : "Save notes"}
+            {savingNotes ? "Saving…" : "Save"}
           </button>
         </div>
       </div>
