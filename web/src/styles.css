@@ -363,12 +363,44 @@ body {
 }
 
 /* Component rows */
+/* Swipe-left container: a fixed-width red trash action sits behind the row,
+   revealed as the row slides left (handled in ComponentRow). */
+.comp-swipe {
+  position: relative;
+  margin-bottom: 11px;
+  border-radius: 16px;
+  overflow: hidden;
+}
+.comp-delete-action {
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: 76px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--red);
+  border-radius: 16px;
+}
+.comp-trash {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 10px 14px;
+}
+.comp-trash:active {
+  opacity: 0.7;
+}
 .comp {
+  position: relative;
   background: var(--surface);
   border: 1px solid #232323;
   border-radius: 16px;
   padding: 15px 16px;
-  margin-bottom: 11px;
+  /* Let vertical scrolling pass through while we capture horizontal swipes. */
+  touch-action: pan-y;
 }
 .comp-top {
   display: flex;
