@@ -1,4 +1,4 @@
-import { type Component, type Status, computeWear } from "../lib/garage";
+import { type Component, type Status, computeWear, psiSummary } from "../lib/garage";
 import { useUnits } from "../UnitsContext";
 
 const STATUS: Record<Status, { cls: string; bar: string; txt: string }> = {
@@ -19,9 +19,7 @@ export function ComponentRow({ component, bikeMeters, onOpen }: Props) {
   const { units, dist } = useUnits();
   const { wearMeters, pct, status } = computeWear(component, bikeMeters, units);
   const s = STATUS[status];
-  const sub = [component.brand, component.psi ? `${component.psi} PSI` : null]
-    .filter(Boolean)
-    .join(" · ");
+  const sub = [component.brand, psiSummary(component)].filter(Boolean).join(" · ");
 
   return (
     <button type="button" className="comp comp-tap" onClick={onOpen}>

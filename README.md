@@ -67,8 +67,7 @@ The web app points at the production API by default (`web/src/lib/api.ts`); chan
 | Chain (ceramic) | 650 km |
 | Cassette | 8,000 km |
 | Chainring | 15,000 km |
-| Front tire | 4,000 km |
-| Rear tire | 3,000 km |
+| Tires (inspect & inflate) | 62 mi (~100 km) |
 | Brake pads | 2,000 km |
 | Rotors | 10,000 km |
 

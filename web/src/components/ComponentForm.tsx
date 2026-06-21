@@ -25,7 +25,12 @@ export function ComponentForm({ bikeId, bikeMeters, initial, onSubmit, onCancel 
   const [type, setType] = useState<ComponentType>(initial?.type ?? "chain");
   const [lube, setLube] = useState<LubeType>(initial?.lube ?? "wax");
   const [brand, setBrand] = useState<string>(initial?.brand ?? "");
-  const [psi, setPsi] = useState<string>(initial?.psi != null ? String(initial.psi) : "");
+  const [psiFront, setPsiFront] = useState<string>(
+    initial?.psiFront != null ? String(initial.psiFront) : "",
+  );
+  const [psiRear, setPsiRear] = useState<string>(
+    initial?.psiRear != null ? String(initial.psiRear) : "",
+  );
   // Strings so the fields can be cleared/edited freely.
   const [interval, setInterval] = useState<string>(() =>
     String(Math.round(fromMeters((initial?.intervalMeters ?? 400 * 1000) || 0, units))),
@@ -75,7 +80,8 @@ export function ComponentForm({ bikeId, bikeMeters, initial, onSubmit, onCancel 
         label,
         lube: entry.hasLube ? lube : undefined,
         brand: brand.trim() ? brand.trim() : undefined,
-        psi: isTire && num(psi) > 0 ? num(psi) : undefined,
+        psiFront: isTire && num(psiFront) > 0 ? num(psiFront) : undefined,
+        psiRear: isTire && num(psiRear) > 0 ? num(psiRear) : undefined,
         installMeters: Math.max(0, bikeMeters - toMeters(num(wear), units)),
         intervalMeters: toMeters(num(interval), units),
       });
@@ -129,13 +135,24 @@ export function ComponentForm({ bikeId, bikeMeters, initial, onSubmit, onCancel 
       {isTire && (
         <div className="form-row">
           <label>Target PSI</label>
-          <input
-            type="number"
-            inputMode="numeric"
-            placeholder="optional"
-            value={psi}
-            onChange={(e) => setPsi(e.target.value)}
-          />
+          <div className="form-pair">
+            <input
+              type="number"
+              inputMode="numeric"
+              placeholder="front"
+              aria-label="Front PSI"
+              value={psiFront}
+              onChange={(e) => setPsiFront(e.target.value)}
+            />
+            <input
+              type="number"
+              inputMode="numeric"
+              placeholder="rear"
+              aria-label="Rear PSI"
+              value={psiRear}
+              onChange={(e) => setPsiRear(e.target.value)}
+            />
+          </div>
         </div>
       )}
 
