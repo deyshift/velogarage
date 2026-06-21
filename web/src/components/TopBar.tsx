@@ -58,7 +58,7 @@ export function TopBar({ athlete, syncing, onSync, onDisconnect }: Props) {
             <button
               type="button"
               className="hidden-menu-btn"
-              aria-haspopup="menu"
+              aria-haspopup="true"
               aria-expanded={menuOpen}
               aria-label={`Hidden bikes (${hidden.length})`}
               onClick={() => setMenuOpen((v) => !v)}
@@ -68,10 +68,10 @@ export function TopBar({ athlete, syncing, onSync, onDisconnect }: Props) {
             {menuOpen && (
               <>
                 <div className="menu-backdrop" onClick={() => setMenuOpen(false)} />
-                <div className="hidden-menu-panel" role="menu">
+                <div className="hidden-menu-panel">
                   <div className="hidden-menu-title">Hidden bikes</div>
                   {hidden.map((b) => (
-                    <div className="hidden-menu-row" key={b.id} role="menuitem">
+                    <div className="hidden-menu-row" key={b.id}>
                       <span className="hidden-menu-name">{b.name || "Bike"}</span>
                       <button
                         type="button"
