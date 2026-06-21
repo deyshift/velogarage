@@ -266,6 +266,67 @@ body {
   font-size: 22px;
 }
 
+/* Hidden bikes section on the garage list */
+.hidden-bikes {
+  margin-top: 18px;
+  border-top: 1px solid #1f1f1f;
+  padding-top: 14px;
+}
+.hidden-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  padding: 6px 4px;
+  cursor: pointer;
+}
+.hidden-chev {
+  font-size: 12px;
+}
+.hidden-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--surface);
+  border: 1px solid #232323;
+  border-radius: 14px;
+  padding: 13px 16px;
+  margin-top: 10px;
+}
+.hidden-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* "Hide bike from garage" action at the bottom of the bike detail view */
+.bike-hide {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid #2f2f2f;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
+  padding: 13px;
+  border-radius: 14px;
+  cursor: pointer;
+  margin-top: 24px;
+}
+.bike-hide:active {
+  opacity: 0.7;
+}
+
 .detail-head {
   display: flex;
   align-items: center;

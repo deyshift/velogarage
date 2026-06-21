@@ -38,9 +38,12 @@ export interface LogEntry {
 export interface Garage {
   components: Component[];
   log: LogEntry[];
+  // Strava gear ids the rider has hidden from the garage (e.g. a bike-share
+  // bike that doesn't need maintenance tracking). Hidden bikes can be unhidden.
+  hiddenBikeIds: string[];
 }
 
-export const emptyGarage = (): Garage => ({ components: [], log: [] });
+export const emptyGarage = (): Garage => ({ components: [], log: [], hiddenBikeIds: [] });
 
 // Older tires stored a single `psi`. Carry it onto both front and rear so
 // existing garages keep showing a pressure after the split.
@@ -58,7 +61,11 @@ export async function getGarage(): Promise<Garage> {
   const r = await fetch(`${API}/api/garage`, { headers: { Authorization: `Bearer ${token}` } });
   if (!r.ok) throw new Error(`garage_load_${r.status}`);
   const data = await r.json();
-  return { components: (data.components ?? []).map(migrateComponent), log: data.log ?? [] };
+  return {
+    components: (data.components ?? []).map(migrateComponent),
+    log: data.log ?? [],
+    hiddenBikeIds: (data.hiddenBikeIds ?? []).map(String),
+  };
 }
 
 /** Short front/rear PSI summary for a tire, or null if neither is set. */

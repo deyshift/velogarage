@@ -25,6 +25,7 @@ interface GarageContextValue {
   serviceComponent: (componentId: string, bikeMeters: number, label: string) => Promise<void>;
   removeComponent: (componentId: string) => Promise<void>;
   removeLogEntry: (logId: string) => Promise<void>;
+  setBikeHidden: (bikeId: string, hidden: boolean) => Promise<void>;
 }
 
 const GarageContext = createContext<GarageContextValue | null>(null);
@@ -130,6 +131,22 @@ export function GarageProvider({ children }: { children: ReactNode }) {
     [persist],
   );
 
+  // Hide/unhide a bike from the garage. Bikes themselves come from Strava, so
+  // we only persist the set of hidden ids (deduped) in the garage doc.
+  const setBikeHidden = useCallback(
+    (bikeId: string, hidden: boolean) => {
+      const g = ref.current;
+      const id = String(bikeId);
+      const has = g.hiddenBikeIds.includes(id);
+      if (hidden === has) return Promise.resolve(); // no change
+      const hiddenBikeIds = hidden
+        ? [...g.hiddenBikeIds, id]
+        : g.hiddenBikeIds.filter((x) => x !== id);
+      return persist({ ...g, hiddenBikeIds });
+    },
+    [persist],
+  );
+
   return (
     <GarageContext.Provider
       value={{
@@ -141,6 +158,7 @@ export function GarageProvider({ children }: { children: ReactNode }) {
         serviceComponent,
         removeComponent,
         removeLogEntry,
+        setBikeHidden,
       }}
     >
       {children}
