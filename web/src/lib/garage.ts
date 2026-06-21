@@ -1,5 +1,6 @@
 import { API } from "./api";
 import { getToken } from "./auth";
+import { additiveFromLabel, componentLabel } from "./catalog";
 import { type Units, fromMeters } from "./units";
 
 export type ComponentType =
@@ -8,7 +9,11 @@ export type ComponentType =
   | "chainring"
   | "tire"
   | "brakePads"
-  | "rotors";
+  | "rotors"
+  // Whole-bike / frame reminders tracked on a calendar (days) cadence rather
+  // than mileage — see CATALOG entries with `defaultDays`.
+  | "torque"
+  | "inspection";
 
 export type LubeType = "wax" | "dry" | "wet" | "ceramic";
 
@@ -24,6 +29,12 @@ export interface Component {
   notes?: string; // rider's free-text notes, edited in the component detail view
   installMeters: number; // bike lifetime distance at install / last service
   intervalMeters: number; // service interval
+  // Time-based reminders (e.g. torque check, annual service) track a calendar
+  // cadence instead of mileage. When `intervalDays` is set the component is
+  // time-based: progress is measured in days since `installDate`, and the
+  // meters fields are unused.
+  intervalDays?: number; // service interval in days
+  installDate?: string; // ISO timestamp of last service / install
 }
 
 export interface LogEntry {
@@ -41,18 +52,37 @@ export interface Garage {
   // Strava gear ids the rider has hidden from the garage (e.g. a bike-share
   // bike that doesn't need maintenance tracking). Hidden bikes can be unhidden.
   hiddenBikeIds: string[];
+  // Bike ids whose automatic frame reminders have already been seeded, so a
+  // reminder the rider deletes doesn't reappear on the next visit.
+  seededBikes: string[];
 }
 
-export const emptyGarage = (): Garage => ({ components: [], log: [], hiddenBikeIds: [] });
+export const emptyGarage = (): Garage => ({
+  components: [],
+  log: [],
+  hiddenBikeIds: [],
+  seededBikes: [],
+});
 
-// Older tires stored a single `psi`. Carry it onto both front and rear so
-// existing garages keep showing a pressure after the split.
+// Bring stored components up to date with the current catalog/shape:
+//  - Labels are derived from the component type (and lube), not user-editable,
+//    so always refresh them. This picks up renames like "Chain (Wax)" → "Clean
+//    & wax drivetrain" and "Tires" → "Inflate and Inspect Tires".
+//  - Older tires stored a single `psi`; carry it onto both front and rear so
+//    existing garages keep showing a pressure after the split.
 function migrateComponent(c: Component & { psi?: number }): Component {
-  if (c.type === "tire" && c.psi != null && c.psiFront == null && c.psiRear == null) {
-    const { psi, ...rest } = c;
-    return { ...rest, psiFront: psi, psiRear: psi };
+  const out: Component & { psi?: number } = {
+    ...c,
+    // Re-derive the label, preserving the wax additive chip encoded in the old
+    // label so a chain's chip (and thus its interval rationale) survives.
+    label: componentLabel(c.type, c.lube, additiveFromLabel(c.label)),
+  };
+  if (out.type === "tire" && out.psi != null && out.psiFront == null && out.psiRear == null) {
+    out.psiFront = out.psi;
+    out.psiRear = out.psi;
   }
-  return c;
+  delete out.psi;
+  return out;
 }
 
 export async function getGarage(): Promise<Garage> {
@@ -65,6 +95,7 @@ export async function getGarage(): Promise<Garage> {
     components: (data.components ?? []).map(migrateComponent),
     log: data.log ?? [],
     hiddenBikeIds: (data.hiddenBikeIds ?? []).map(String),
+    seededBikes: data.seededBikes ?? [],
   };
 }
 
@@ -91,12 +122,35 @@ export async function putGarage(g: Garage): Promise<void> {
 export type Status = "good" | "warn" | "over";
 
 export interface Wear {
-  wearMeters: number;
+  timeBased: boolean;
+  wearMeters: number; // distance-based progress (0 for time-based)
+  elapsedDays: number; // time-based progress (0 for distance-based)
   pct: number; // 0..(>1)
   status: Status;
 }
 
-export function computeWear(component: Component, bikeMeters: number, units: Units): Wear {
+const MS_PER_DAY = 86_400_000;
+
+export function computeWear(
+  component: Component,
+  bikeMeters: number,
+  units: Units,
+  now: number = Date.now(),
+): Wear {
+  // Time-based reminder: measure whole days since the last service.
+  if (component.intervalDays != null) {
+    const interval = component.intervalDays;
+    // A missing or unparseable install date falls back to "now" (0 days
+    // elapsed) so a corrupt value can't poison the status with NaN.
+    const parsed = component.installDate ? new Date(component.installDate).getTime() : now;
+    const start = Number.isFinite(parsed) ? parsed : now;
+    const elapsedDays = Math.max(0, Math.floor((now - start) / MS_PER_DAY));
+    const pct = interval > 0 ? elapsedDays / interval : 0;
+    const over = interval > 0 && elapsedDays >= interval;
+    const status: Status = over ? "over" : pct >= 0.8 ? "warn" : "good";
+    return { timeBased: true, wearMeters: 0, elapsedDays, pct, status };
+  }
+
   const interval = component.intervalMeters;
   const wearMeters = Math.max(0, bikeMeters - component.installMeters);
   const pct = interval > 0 ? wearMeters / interval : 0;
@@ -107,7 +161,7 @@ export function computeWear(component: Component, bikeMeters: number, units: Uni
   const intervalShown = Math.round(fromMeters(interval, units));
   const over = interval > 0 && (pct >= 1 || (intervalShown > 0 && wearShown >= intervalShown));
   const status: Status = over ? "over" : pct >= 0.8 ? "warn" : "good";
-  return { wearMeters, pct, status };
+  return { timeBased: false, wearMeters, elapsedDays: 0, pct, status };
 }
 
 /** Worst status among a set of components, for the garage list badge. */

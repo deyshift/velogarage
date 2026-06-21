@@ -33,11 +33,15 @@ export function ComponentDetail({
   onDelete,
 }: Props) {
   const { units, dist } = useUnits();
-  const { wearMeters, pct, status } = computeWear(component, bikeMeters, units);
+  const wear = computeWear(component, bikeMeters, units);
+  const { pct, status } = wear;
   const s = STATUS[status];
   const sub = [component.brand, psiSummary(component)].filter(Boolean).join(" · ");
   const isTire = component.type === "tire";
   const actionLabel = serviceActionLabel(component.type);
+  const meta = wear.timeBased
+    ? `${wear.elapsedDays} / ${component.intervalDays} days`
+    : `${dist(wear.wearMeters)} / ${dist(component.intervalMeters)} ${units}`;
 
   const [editingSettings, setEditingSettings] = useState(false);
   const [notes, setNotes] = useState(component.notes ?? "");
@@ -45,14 +49,24 @@ export function ComponentDetail({
   const notesDirty = notes !== (component.notes ?? "");
 
   const reset = () => {
-    const prompt = isTire
-      ? "Inspect and inflate tires?\n\n" +
-        "This marks them freshly inspected — wear goes back to 0 and a service-log entry is added."
-      : component.type === "chain"
-        ? `${actionLabel}?\n\n` +
-          "This marks it freshly serviced — wear goes back to 0 and a service-log entry is added."
-        : `Reset ${component.label}?\n\n` +
-          "This marks it freshly serviced — wear goes back to 0 and a service-log entry is added.";
+    let prompt: string;
+    if (isTire) {
+      prompt =
+        "Inspect and inflate tires?\n\n" +
+        "This marks them freshly inspected — wear goes back to 0 and a service-log entry is added.";
+    } else if (wear.timeBased) {
+      prompt =
+        `Mark "${component.label}" as done?\n\n` +
+        "This records today as the last service — the countdown restarts and a service-log entry is added.";
+    } else if (component.type === "chain") {
+      prompt =
+        `${actionLabel}?\n\n` +
+        "This marks it freshly serviced — wear goes back to 0 and a service-log entry is added.";
+    } else {
+      prompt =
+        `Reset ${component.label}?\n\n` +
+        "This marks it freshly serviced — wear goes back to 0 and a service-log entry is added.";
+    }
     if (confirm(prompt)) onReset();
   };
 
@@ -104,9 +118,7 @@ export function ComponentDetail({
             style={{ width: `${Math.min(pct * 100, 100)}%`, background: s.bar }}
           />
         </div>
-        <div className="cd-meta">
-          {dist(wearMeters)} / {dist(component.intervalMeters)} {units}
-        </div>
+        <div className="cd-meta">{meta}</div>
       </div>
 
       <button type="button" className="cd-reset" onClick={reset}>
@@ -156,7 +168,9 @@ export function ComponentDetail({
             <div className="cd-setting">
               <span>Service interval</span>
               <span>
-                {dist(component.intervalMeters)} {units}
+                {wear.timeBased
+                  ? `${component.intervalDays} days`
+                  : `${dist(component.intervalMeters)} ${units}`}
               </span>
             </div>
             {component.lube && (

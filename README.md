@@ -59,17 +59,19 @@ The web app points at the production API by default (`web/src/lib/api.ts`); chan
 
 ## Component intervals
 
+Most components wear by distance, calculated from the bike's Strava mileage:
+
 | Component | Default interval |
 |---|---|
-| Chain — wax (hot melt) | 320 mi |
-| Chain — wax + Endurance chip | 465 mi |
-| Chain — wax + Speed chip | 125 mi |
-| Chain — dry lube | 125 mi |
-| Chain — wet lube | 182 mi |
-| Chain — ceramic | 405 mi |
+| Clean & wax drivetrain (hot melt) | 320 mi |
+| Clean & wax drivetrain (+ Endurance chip) | 465 mi |
+| Clean & wax drivetrain (+ Speed chip) | 125 mi |
+| Clean & lube drivetrain (dry lube) | 125 mi |
+| Clean & lube drivetrain (wet lube) | 182 mi |
+| Clean & lube drivetrain (ceramic) | 405 mi |
 | Cassette | 8,000 km |
 | Chainring | 15,000 km |
-| Tires (inspect & inflate) | 62 mi (~100 km) |
+| Inflate and Inspect Tires | 62 mi (~100 km) |
 | Brake pads | 2,000 km |
 | Rotors | 10,000 km |
 
@@ -98,6 +100,19 @@ Heuristic lives in [`web/src/lib/catalog.ts`](web/src/lib/catalog.ts)
 (62 mi) rather than an attribute-aware *replacement* mileage: that cadence is
 about checking pressure, which doesn't vary by compound/use, so a category
 picker wouldn't improve the default.
+
+### Whole-bike reminders (time-based)
+
+Two maintenance reminders are tracked on a calendar cadence instead of mileage,
+and are added automatically the first time you open each bike:
+
+| Reminder | Default interval |
+|---|---|
+| Check and torque bolts | 180 days |
+| Yearly inspection and service | 365 days |
+
+Marking one "done" records today as the last service and restarts the countdown.
+Their intervals are editable per bike, in days.
 
 ## Privacy
 
