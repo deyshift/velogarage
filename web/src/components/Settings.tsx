@@ -269,7 +269,7 @@ export function Settings({ athlete, bikes, onDisconnect, onClose }: Props) {
         rel="noreferrer"
         aria-label="Powered by Strava"
       >
-        <img src="/powered-by-strava.svg" alt="Powered by Strava" />
+        <img src={`${import.meta.env.BASE_URL}powered-by-strava.svg`} alt="Powered by Strava" />
       </a>
     </div>
   );
