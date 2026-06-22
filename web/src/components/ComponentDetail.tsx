@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { type Component, type Status, computeWear, psiSummary } from "../lib/garage";
-import { LUBE_LABEL, serviceActionLabel } from "../lib/catalog";
+import { LUBE_LABEL } from "../lib/catalog";
 import { useUnits } from "../UnitsContext";
 import { ComponentForm } from "./ComponentForm";
 
@@ -38,7 +38,6 @@ export function ComponentDetail({
   const s = STATUS[status];
   const sub = [component.brand, psiSummary(component)].filter(Boolean).join(" · ");
   const isTire = component.type === "tire";
-  const actionLabel = serviceActionLabel(component.type);
   const meta = wear.timeBased
     ? `${wear.elapsedDays} / ${component.intervalDays} days`
     : `${dist(wear.wearMeters)} / ${dist(component.intervalMeters)} ${units}`;
@@ -49,25 +48,19 @@ export function ComponentDetail({
   const notesDirty = notes !== (component.notes ?? "");
 
   const reset = () => {
-    let prompt: string;
+    // Every component uses a "Reset …?" prompt to match the button; the body
+    // explains what resetting means for this type (inspect/inflate, restart a
+    // countdown, or zero out wear).
+    let body: string;
     if (isTire) {
-      prompt =
-        "Inspect and inflate tires?\n\n" +
-        "This marks them freshly inspected — wear goes back to 0 and a service-log entry is added.";
+      body = "This marks the tires freshly inspected — wear goes back to 0 and a service-log entry is added.";
     } else if (wear.timeBased) {
-      prompt =
-        `Mark "${component.label}" as done?\n\n` +
+      body =
         "This records today as the last service — the countdown restarts and a service-log entry is added.";
-    } else if (component.type === "chain") {
-      prompt =
-        `${actionLabel}?\n\n` +
-        "This marks it freshly serviced — wear goes back to 0 and a service-log entry is added.";
     } else {
-      prompt =
-        `Reset ${component.label}?\n\n` +
-        "This marks it freshly serviced — wear goes back to 0 and a service-log entry is added.";
+      body = "This marks it freshly serviced — wear goes back to 0 and a service-log entry is added.";
     }
-    if (confirm(prompt)) onReset();
+    if (confirm(`Reset "${component.label}"?\n\n${body}`)) onReset();
   };
 
   const del = () => {
