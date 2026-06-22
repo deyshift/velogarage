@@ -261,6 +261,16 @@ export function Settings({ athlete, bikes, onDisconnect, onClose }: Props) {
           ))
         )}
       </div>
+
+      <a
+        className="powered-by settings-powered-by"
+        href="https://www.strava.com"
+        target="_blank"
+        rel="noreferrer"
+        aria-label="Powered by Strava"
+      >
+        <img src="/powered-by-strava.svg" alt="Powered by Strava" />
+      </a>
     </div>
   );
 }

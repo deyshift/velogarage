@@ -13,7 +13,6 @@
   --surface: #181818;
   --text: #f0f0f0;
   --muted: #8a8a8a;
-  --strava: #fc4c02;
   --green: #22c55e;
   --amber: #f59e0b;
   --red: #ef4444;
@@ -77,22 +76,27 @@ body {
   max-width: 300px;
   line-height: 1.5;
 }
+/* Official "Connect with Strava" button — the SVG is the whole button
+   artwork (do not restyle it); we only size it and keep its aspect ratio. */
 .btn-strava {
   display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--strava);
-  color: #fff;
-  font-size: 16px;
-  font-weight: 700;
-  padding: 15px 26px;
-  border-radius: 12px;
-  text-decoration: none;
   width: 100%;
-  max-width: 320px;
+  max-width: 272px;
+}
+.btn-strava img {
+  width: 100%;
+  height: auto;
 }
 .btn-strava:active {
   opacity: 0.85;
+}
+/* Official "Powered by Strava" mark (white variant on the dark UI). */
+.powered-by {
+  display: inline-flex;
+}
+.powered-by img {
+  height: 28px;
+  width: auto;
 }
 .fine {
   font-size: 12px;
@@ -351,6 +355,12 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.settings-powered-by {
+  justify-content: center;
+  width: 100%;
+  margin: 6px 0 8px;
+  opacity: 0.85;
 }
 .btn-danger {
   background: rgba(239, 68, 68, 0.12);
