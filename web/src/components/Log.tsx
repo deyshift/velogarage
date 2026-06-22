@@ -73,7 +73,6 @@ export function Log({ bikes }: { bikes: Bike[] | null }) {
 
       {entries.map((l) => (
         <div className="log-item" key={l.id}>
-          <div className="log-ic">🔧</div>
           <div className="log-main">
             <div className="log-title">{l.label}</div>
             <div className="log-sub">

@@ -18,7 +18,6 @@ export function BikeCard({ bike, onClick }: { bike: Bike; onClick: () => void })
 
   return (
     <div className="bike-card" onClick={onClick}>
-      <div className="bike-emoji">🚲</div>
       <div className="bike-info">
         <div className="bike-name">{bike.name || "Bike"}</div>
         <div className="bike-dist">

@@ -3,7 +3,6 @@ import { loginUrl } from "../lib/auth";
 export function Login({ error }: { error?: string }) {
   return (
     <div className="login">
-      <div className="emoji">🚲</div>
       <h1>
         <span>Velo</span>Garage
       </h1>
