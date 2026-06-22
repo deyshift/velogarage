@@ -227,35 +227,6 @@ body {
   margin: 6px 4px 14px;
 }
 
-/* Garage summary header — combined totals and at-a-glance service status,
-   so the screen reads as a dashboard even with just one or two bikes. */
-.garage-summary {
-  background: var(--surface);
-  border: 1px solid #232323;
-  border-radius: 18px;
-  padding: 18px;
-  margin-bottom: 14px;
-}
-.gs-totals {
-  font-size: 20px;
-  font-weight: 800;
-  letter-spacing: -0.4px;
-}
-.gs-services {
-  margin-top: 6px;
-  font-size: 14px;
-  font-weight: 600;
-}
-.gs-good {
-  color: var(--muted);
-}
-.gs-soon {
-  color: var(--amber);
-}
-.gs-over {
-  color: var(--red);
-}
-
 .bike-card {
   background: var(--surface);
   border: 1px solid #232323;
