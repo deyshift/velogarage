@@ -498,6 +498,25 @@ body {
   padding: 8px 4px 16px;
 }
 
+/* Section heading separating the whole-bike reminders from the wear parts. */
+.comp-section {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 6px 2px 12px;
+}
+.comp-section::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: #232323;
+}
+
 /* Component rows */
 /* The whole row is a tappable button that opens the component detail view. */
 .comp {

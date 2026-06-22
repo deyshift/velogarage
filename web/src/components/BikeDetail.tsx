@@ -18,21 +18,25 @@ export function BikeDetail({ bike, onBack }: { bike: Bike; onBack: () => void })
     serviceComponent,
     removeComponent,
     setBikeHidden,
-    ensureFrameReminders,
+    ensureDefaultComponents,
   } = useGarage();
   const [adding, setAdding] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
 
   const bikeId = String(bike.id);
   const components = garage.components.filter((c) => String(c.bikeId) === bikeId);
+  // Split into mileage-tracked wear parts and calendar-based whole-bike
+  // reminders so each renders in its own section.
+  const wearParts = components.filter((c) => c.intervalDays == null);
+  const reminders = components.filter((c) => c.intervalDays != null);
   const storageDown = error?.includes("503");
 
-  // Seed this bike's automatic maintenance reminders once the garage has loaded.
+  // Seed this bike's automatic default components once the garage has loaded.
   // Idempotent, so a re-run after the resulting state change is a no-op; a save
   // failure (e.g. storage down) sets `error` and stops it from retrying.
   useEffect(() => {
-    if (!loading && !error) void ensureFrameReminders(bikeId).catch(() => {});
-  }, [loading, error, bikeId, ensureFrameReminders]);
+    if (!loading && !error) void ensureDefaultComponents(bikeId, bike.distance).catch(() => {});
+  }, [loading, error, bikeId, bike.distance, ensureDefaultComponents]);
 
   // The open component is derived from live state so resets/edits reflect
   // immediately; if it's been deleted, fall back to the component list.
@@ -153,7 +157,20 @@ export function BikeDetail({ bike, onBack }: { bike: Bike; onBack: () => void })
         </div>
       )}
 
-      {components.map((c) => (
+      {wearParts.map((c) => (
+        <ComponentRow
+          key={c.id}
+          component={c}
+          bikeMeters={bike.distance}
+          onOpen={() => setOpenId(c.id)}
+        />
+      ))}
+
+      {reminders.length > 0 && (
+        <div className="comp-section">Whole-bike reminders</div>
+      )}
+
+      {reminders.map((c) => (
         <ComponentRow
           key={c.id}
           component={c}
