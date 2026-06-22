@@ -17,6 +17,7 @@ export function BikeDetail({ bike, onBack }: { bike: Bike; onBack: () => void })
     updateComponent,
     serviceComponent,
     removeComponent,
+    setBikeHidden,
     ensureFrameReminders,
   } = useGarage();
   const [adding, setAdding] = useState(false);
@@ -64,6 +65,15 @@ export function BikeDetail({ bike, onBack }: { bike: Bike; onBack: () => void })
       saveError(e);
       throw e;
     }
+  };
+
+  // Hide this bike from the garage, then pop back to the list. It can be
+  // unhidden later from the hidden-bikes menu in the top bar.
+  const onHide = () => {
+    if (!confirm(`Hide "${bike.name || "this bike"}" from your garage? You can unhide it later.`))
+      return;
+    onBack();
+    guard(() => setBikeHidden(bikeId, true));
   };
 
   // Add shares the form; only close it once the save actually succeeds.
@@ -151,6 +161,10 @@ export function BikeDetail({ bike, onBack }: { bike: Bike; onBack: () => void })
           onOpen={() => setOpenId(c.id)}
         />
       ))}
+
+      <button type="button" className="bike-hide" onClick={onHide}>
+        Hide bike from garage
+      </button>
     </>
   );
 }

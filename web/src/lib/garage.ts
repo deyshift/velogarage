@@ -49,12 +49,20 @@ export interface LogEntry {
 export interface Garage {
   components: Component[];
   log: LogEntry[];
+  // Strava gear ids the rider has hidden from the garage (e.g. a bike-share
+  // bike that doesn't need maintenance tracking). Hidden bikes can be unhidden.
+  hiddenBikeIds: string[];
   // Bike ids whose automatic frame reminders have already been seeded, so a
   // reminder the rider deletes doesn't reappear on the next visit.
   seededBikes: string[];
 }
 
-export const emptyGarage = (): Garage => ({ components: [], log: [], seededBikes: [] });
+export const emptyGarage = (): Garage => ({
+  components: [],
+  log: [],
+  hiddenBikeIds: [],
+  seededBikes: [],
+});
 
 // Bring stored components up to date with the current catalog/shape:
 //  - Labels are derived from the component type (and lube), not user-editable,
@@ -86,6 +94,7 @@ export async function getGarage(): Promise<Garage> {
   return {
     components: (data.components ?? []).map(migrateComponent),
     log: data.log ?? [],
+    hiddenBikeIds: (data.hiddenBikeIds ?? []).map(String),
     seededBikes: data.seededBikes ?? [],
   };
 }

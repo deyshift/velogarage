@@ -26,6 +26,7 @@ interface GarageContextValue {
   serviceComponent: (componentId: string, bikeMeters: number, label: string) => Promise<void>;
   removeComponent: (componentId: string) => Promise<void>;
   removeLogEntry: (logId: string) => Promise<void>;
+  setBikeHidden: (bikeId: string, hidden: boolean) => Promise<void>;
   // Seed the automatic whole-bike maintenance reminders for a bike if missing.
   ensureFrameReminders: (bikeId: string) => Promise<void>;
 }
@@ -139,6 +140,27 @@ export function GarageProvider({ children }: { children: ReactNode }) {
     [persist],
   );
 
+  // Hide/unhide a bike from the garage. Bikes themselves come from Strava, so
+  // we only persist the set of hidden ids in the garage doc. Normalize through
+  // a Set so the stored list is deduped, and skip the write when nothing
+  // actually changes.
+  const setBikeHidden = useCallback(
+    (bikeId: string, hidden: boolean) => {
+      const g = ref.current;
+      const id = String(bikeId);
+      const set = new Set(g.hiddenBikeIds.map(String));
+      if (hidden) set.add(id);
+      else set.delete(id);
+      const hiddenBikeIds = [...set];
+      const unchanged =
+        hiddenBikeIds.length === g.hiddenBikeIds.length &&
+        hiddenBikeIds.every((x, i) => x === g.hiddenBikeIds[i]);
+      if (unchanged) return Promise.resolve();
+      return persist({ ...g, hiddenBikeIds });
+    },
+    [persist],
+  );
+
   // Seed a bike's automatic reminders (torque check, annual service) exactly
   // once. Seeded bikes are recorded in `seededBikes`, so reminders the rider
   // later deletes stay deleted instead of reappearing on the next visit. Safe
@@ -182,6 +204,7 @@ export function GarageProvider({ children }: { children: ReactNode }) {
         serviceComponent,
         removeComponent,
         removeLogEntry,
+        setBikeHidden,
         ensureFrameReminders,
       }}
     >

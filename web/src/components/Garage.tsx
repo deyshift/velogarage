@@ -1,4 +1,5 @@
 import type { Bike } from "../types";
+import { useGarage } from "../GarageContext";
 import { BikeCard } from "./BikeCard";
 
 interface Props {
@@ -10,6 +11,8 @@ interface Props {
 }
 
 export function Garage({ bikes, loading, error, onRetry, onOpen }: Props) {
+  const { garage } = useGarage();
+
   if (loading) {
     return (
       <div className="state">
@@ -44,14 +47,23 @@ export function Garage({ bikes, loading, error, onRetry, onOpen }: Props) {
       </div>
     );
   }
+
+  const hiddenIds = new Set(garage.hiddenBikeIds.map(String));
+  const visible = bikes.filter((b) => !hiddenIds.has(String(b.id)));
+
   return (
     <>
       <div className="screen-label">
-        My Garage · {bikes.length} {bikes.length === 1 ? "bike" : "bikes"}
+        My Garage · {visible.length} {visible.length === 1 ? "bike" : "bikes"}
       </div>
-      {bikes.map((b) => (
-        <BikeCard key={b.id} bike={b} onClick={() => onOpen(b)} />
-      ))}
+
+      {visible.length === 0 ? (
+        <div className="empty-note">
+          All your bikes are hidden. Use the hidden-bikes menu in the top bar to unhide one.
+        </div>
+      ) : (
+        visible.map((b) => <BikeCard key={b.id} bike={b} onClick={() => onOpen(b)} />)
+      )}
     </>
   );
 }
