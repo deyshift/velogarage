@@ -19,15 +19,6 @@ export function Login({ error }: { error?: string }) {
         VeloGarage reads your ride data to calculate component wear. It never posts or modifies your
         Strava activities.
       </div>
-      <a
-        className="powered-by"
-        href="https://www.strava.com"
-        target="_blank"
-        rel="noreferrer"
-        aria-label="Powered by Strava"
-      >
-        <img src={asset("powered-by-strava.svg")} alt="Powered by Strava" />
-      </a>
     </div>
   );
 }

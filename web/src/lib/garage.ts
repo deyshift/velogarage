@@ -1,6 +1,6 @@
 import { API } from "./api";
 import { getToken } from "./auth";
-import { additiveFromLabel, componentLabel } from "./catalog";
+import { componentLabel } from "./catalog";
 import { type Units, fromMeters } from "./units";
 
 export type ComponentType =
@@ -113,9 +113,9 @@ function normalizeSeeded(v: unknown): Record<string, number> {
 function migrateComponent(c: Component & { psi?: number }): Component {
   const out: Component & { psi?: number } = {
     ...c,
-    // Re-derive the label, preserving the wax additive chip encoded in the old
-    // label so a chain's chip (and thus its interval rationale) survives.
-    label: componentLabel(c.type, c.lube, additiveFromLabel(c.label)),
+    // Re-derive the label from type/lube. (The wax additive is no longer shown
+    // in the label; existing "(…)" chips are dropped on this pass.)
+    label: componentLabel(c.type, c.lube),
   };
   if (out.type === "tire" && out.psi != null && out.psiFront == null && out.psiRear == null) {
     out.psiFront = out.psi;

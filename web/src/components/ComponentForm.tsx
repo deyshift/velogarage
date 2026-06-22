@@ -135,7 +135,7 @@ export function ComponentForm({ bikeId, bikeMeters, initial, onSubmit, onCancel 
         await onSubmit({
           bikeId,
           type,
-          label: componentLabel(type, entry.hasLube ? lube : undefined, additive),
+          label: componentLabel(type, entry.hasLube ? lube : undefined),
           lube: entry.hasLube ? lube : undefined,
           brand: brand.trim() ? brand.trim() : undefined,
           psiFront: isTire && num(psiFront) > 0 ? num(psiFront) : undefined,

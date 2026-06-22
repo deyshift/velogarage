@@ -141,18 +141,12 @@ export function defaultInterval(
 
 // The label as displayed/stored for a component. The drivetrain reads as the
 // product actually used — "Clean & wax drivetrain" for wax, "Clean & lube
-// drivetrain" for any oil-based lube — with the hot-wax additive chip (which
-// drives the interval) kept in parentheses so it round-trips on edit. Every
-// other component uses its catalog label.
-export function componentLabel(
-  type: ComponentType,
-  lube?: LubeType,
-  additive: ChainAdditive = "none",
-): string {
+// drivetrain" for any oil-based lube. The hot-wax additive still drives the
+// default interval (see chainIntervalKm), but it's no longer shown in the
+// label. Every other component uses its catalog label.
+export function componentLabel(type: ComponentType, lube?: LubeType): string {
   if (type === "chain") {
-    const base = lube === "wax" ? "Clean & wax drivetrain" : "Clean & lube drivetrain";
-    if (lube === "wax" && additive !== "none") return `${base} (${ADDITIVE_LABEL[additive]})`;
-    return base;
+    return lube === "wax" ? "Clean & wax drivetrain" : "Clean & lube drivetrain";
   }
   return catalogEntry(type).label;
 }
