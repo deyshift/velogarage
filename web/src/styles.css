@@ -218,6 +218,19 @@ body {
   -webkit-overflow-scrolling: touch;
   padding: 16px 16px calc(env(safe-area-inset-bottom) + 24px);
 }
+/* Fill the scroll area so a short garage (one or two bikes) can sit centered
+   in the viewport instead of clinging to the top. The auto block margins
+   center the list when it's short and collapse to 0 when it overflows, so a
+   full garage still scrolls from the top without clipping. */
+.garage {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.garage-list {
+  margin: auto 0;
+  width: 100%;
+}
 .screen-label {
   font-size: 12px;
   font-weight: 700;
