@@ -6,9 +6,17 @@ export interface CatalogEntry {
   defaultKm?: number; // default service interval, km (distance-based)
   defaultDays?: number; // default service interval, days (time-based)
   hasLube?: boolean;
-  // Seeded automatically per bike (whole-bike maintenance reminders).
+  // Seeded automatically for every bike with the catalog default interval, so a
+  // fresh bike starts with the components most riders track (the wear parts) plus
+  // the whole-bike calendar reminders, instead of an empty list.
   autoAdd?: boolean;
 }
+
+// Bumped whenever the set of `autoAdd` components grows, so bikes seeded under an
+// older catalog pick up the newly-added defaults exactly once (see
+// `ensureDefaultComponents`). v1 seeded only the calendar reminders (torque +
+// annual service); v2 added the wear parts (drivetrain, tires, brake pads).
+export const SEED_VERSION = 2;
 
 const MI = 1.609344; // km per mile
 
@@ -77,11 +85,13 @@ const TIRE_INSPECT_KM = 62 * MI;
 // as the task to perform. The drivetrain entry's CATALOG label is just the
 // picker text; the stored/displayed label comes from componentLabel().
 export const CATALOG: CatalogEntry[] = [
-  { type: "chain", label: "Drivetrain", defaultKm: chainIntervalKm("wax"), hasLube: true },
+  // Wear parts seeded onto every bike (autoAdd) with their researched defaults.
+  { type: "chain", label: "Drivetrain", defaultKm: chainIntervalKm("wax"), hasLube: true, autoAdd: true },
+  { type: "tire", label: "Inflate and Inspect Tires", defaultKm: TIRE_INSPECT_KM, autoAdd: true },
+  { type: "brakePads", label: "Brake pads", defaultKm: 2000, autoAdd: true },
+  // Other distance-based parts the rider can add as needed.
   { type: "cassette", label: "Cassette", defaultKm: 8000 },
   { type: "chainring", label: "Chainring", defaultKm: 15000 },
-  { type: "tire", label: "Inflate and Inspect Tires", defaultKm: TIRE_INSPECT_KM },
-  { type: "brakePads", label: "Brake pads", defaultKm: 2000 },
   { type: "rotors", label: "Rotors", defaultKm: 10000 },
   // Whole-bike, calendar-based reminders, seeded automatically for each bike.
   { type: "torque", label: "Check and torque bolts", defaultDays: 180, autoAdd: true },

@@ -12,11 +12,12 @@ import {
   type Garage,
   type GarageSettings,
   type LogEntry,
+  type LubeType,
   emptyGarage,
   getGarage,
   putGarage,
 } from "./lib/garage";
-import { CATALOG, defaultInterval } from "./lib/catalog";
+import { CATALOG, SEED_VERSION, componentLabel, defaultInterval } from "./lib/catalog";
 
 interface GarageContextValue {
   garage: Garage;
@@ -30,8 +31,9 @@ interface GarageContextValue {
   setBikeHidden: (bikeId: string, hidden: boolean) => Promise<void>;
   // Persist the rider's default service intervals (replaces the whole object).
   updateSettings: (settings: GarageSettings) => Promise<void>;
-  // Seed the automatic whole-bike maintenance reminders for a bike if missing.
-  ensureFrameReminders: (bikeId: string) => Promise<void>;
+  // Seed a bike's automatic default components (wear parts + whole-bike
+  // reminders) if it hasn't been seeded at the current catalog version yet.
+  ensureDefaultComponents: (bikeId: string, bikeMeters: number) => Promise<void>;
 }
 
 const GarageContext = createContext<GarageContextValue | null>(null);
@@ -172,35 +174,52 @@ export function GarageProvider({ children }: { children: ReactNode }) {
     [persist],
   );
 
-  // Seed a bike's automatic reminders (torque check, annual service) exactly
-  // once. Seeded bikes are recorded in `seededBikes`, so reminders the rider
-  // later deletes stay deleted instead of reappearing on the next visit. Safe
-  // to call on every bike-detail mount: it's a no-op once the bike is seeded.
-  const ensureFrameReminders = useCallback(
-    (bikeId: string) => {
+  // Seed a bike's automatic default components — the wear parts (drivetrain,
+  // tires, brake pads) and whole-bike reminders (torque check, annual service) —
+  // each at its catalog default. The bike's seed version is recorded in
+  // `seededBikes`, so a default the rider deletes stays deleted instead of
+  // reappearing, while a bike seeded under an older catalog still picks up
+  // newly-added defaults exactly once. Safe to call on every bike-detail mount:
+  // it's a no-op once the bike is seeded at the current version.
+  const ensureDefaultComponents = useCallback(
+    (bikeId: string, bikeMeters: number) => {
       const g = ref.current;
       const id = String(bikeId);
-      if (g.seededBikes.includes(id)) return Promise.resolve();
+      if ((g.seededBikes[id] ?? 0) >= SEED_VERSION) return Promise.resolve();
       const have = new Set(
         g.components.filter((c) => String(c.bikeId) === id).map((c) => c.type),
       );
       const now = new Date().toISOString();
-      const toAdd: Component[] = CATALOG.filter((e) => e.autoAdd && !have.has(e.type)).map((e) => ({
-        id: uid(),
-        bikeId: id,
-        type: e.type,
-        label: e.label,
-        installMeters: 0,
-        intervalMeters: 0,
-        // Time-based reminders seed their cadence from the rider's defaults
-        // (falling back to the catalog default when uncustomized).
-        intervalDays: defaultInterval(e.type, g.settings),
-        installDate: now,
-      }));
+      const toAdd: Component[] = CATALOG.filter((e) => e.autoAdd && !have.has(e.type)).map((e) => {
+        const base = { id: uid(), bikeId: id, type: e.type };
+        if (e.defaultDays != null) {
+          // Whole-bike reminder: calendar cadence from the rider's defaults
+          // (falling back to the catalog default when uncustomized).
+          return {
+            ...base,
+            label: e.label,
+            installMeters: 0,
+            intervalMeters: 0,
+            intervalDays: defaultInterval(e.type, g.settings),
+            installDate: now,
+          };
+        }
+        // Wear part: mileage cadence, started from the bike's current odometer so
+        // it reads as freshly serviced. The drivetrain carries the default wax
+        // lube so its label and interval match a manually-added one.
+        const lube: LubeType | undefined = e.hasLube ? "wax" : undefined;
+        return {
+          ...base,
+          label: componentLabel(e.type, lube),
+          lube,
+          installMeters: bikeMeters,
+          intervalMeters: defaultInterval(e.type, g.settings, lube ?? "wax"),
+        };
+      });
       return persist({
         ...g,
         components: [...g.components, ...toAdd],
-        seededBikes: [...g.seededBikes, id],
+        seededBikes: { ...g.seededBikes, [id]: SEED_VERSION },
       });
     },
     [persist],
@@ -219,7 +238,7 @@ export function GarageProvider({ children }: { children: ReactNode }) {
         removeLogEntry,
         setBikeHidden,
         updateSettings,
-        ensureFrameReminders,
+        ensureDefaultComponents,
       }}
     >
       {children}
