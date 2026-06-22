@@ -7,6 +7,7 @@ import { TopBar } from "./components/TopBar";
 import { Garage } from "./components/Garage";
 import { BikeDetail } from "./components/BikeDetail";
 import { Log } from "./components/Log";
+import { Settings } from "./components/Settings";
 import { GarageProvider } from "./GarageContext";
 
 type View = "garage" | "log";
@@ -21,6 +22,7 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [openBike, setOpenBike] = useState<Bike | null>(null);
   const [view, setView] = useState<View>("garage");
+  const [showSettings, setShowSettings] = useState(false);
 
   // Capture tokens the API left in the URL fragment after the OAuth redirect.
   useEffect(() => {
@@ -68,6 +70,7 @@ export default function App() {
     setAthlete(null);
     setBikes(null);
     setOpenBike(null);
+    setShowSettings(false);
     setView("garage");
   };
 
@@ -81,45 +84,56 @@ export default function App() {
 
   return (
     <GarageProvider>
-      <TopBar
-        athlete={athlete}
-        syncing={syncing}
-        onSync={() => load(true)}
-        onDisconnect={disconnect}
-      />
-      <div className="screen">
-        {view === "log" ? (
-          <Log bikes={bikes} />
-        ) : openBike ? (
-          <BikeDetail bike={openBike} onBack={() => setOpenBike(null)} />
-        ) : (
-          <Garage
-            bikes={bikes}
-            loading={loading}
-            error={error}
-            onRetry={() => load(true)}
-            onOpen={setOpenBike}
+      {showSettings ? (
+        <Settings
+          athlete={athlete}
+          bikes={bikes}
+          onDisconnect={disconnect}
+          onClose={() => setShowSettings(false)}
+        />
+      ) : (
+        <>
+          <TopBar
+            athlete={athlete}
+            syncing={syncing}
+            onSync={() => load(true)}
+            onOpenSettings={() => setShowSettings(true)}
           />
-        )}
-      </div>
-      <nav className="bottom-nav" aria-label="Main">
-        <button
-          type="button"
-          className={view === "garage" ? "on" : ""}
-          aria-current={view === "garage" ? "page" : undefined}
-          onClick={() => go("garage")}
-        >
-          🚲<span>Garage</span>
-        </button>
-        <button
-          type="button"
-          className={view === "log" ? "on" : ""}
-          aria-current={view === "log" ? "page" : undefined}
-          onClick={() => go("log")}
-        >
-          🔧<span>Log</span>
-        </button>
-      </nav>
+          <div className="screen">
+            {view === "log" ? (
+              <Log bikes={bikes} />
+            ) : openBike ? (
+              <BikeDetail bike={openBike} onBack={() => setOpenBike(null)} />
+            ) : (
+              <Garage
+                bikes={bikes}
+                loading={loading}
+                error={error}
+                onRetry={() => load(true)}
+                onOpen={setOpenBike}
+              />
+            )}
+          </div>
+          <nav className="bottom-nav" aria-label="Main">
+            <button
+              type="button"
+              className={view === "garage" ? "on" : ""}
+              aria-current={view === "garage" ? "page" : undefined}
+              onClick={() => go("garage")}
+            >
+              🚲<span>Garage</span>
+            </button>
+            <button
+              type="button"
+              className={view === "log" ? "on" : ""}
+              aria-current={view === "log" ? "page" : undefined}
+              onClick={() => go("log")}
+            >
+              🔧<span>Log</span>
+            </button>
+          </nav>
+        </>
+      )}
     </GarageProvider>
   );
 }

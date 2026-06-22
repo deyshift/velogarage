@@ -185,6 +185,14 @@ body {
     opacity: 0.25;
   }
 }
+.avatar-btn {
+  display: inline-flex;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: 50%;
+}
 .avatar {
   width: 32px;
   height: 32px;
@@ -266,66 +274,98 @@ body {
   font-size: 22px;
 }
 
-/* Hidden-bikes menu in the top bar (interim home for unhide until Settings) */
-.hidden-menu {
-  position: relative;
-}
-.hidden-menu-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
+/* Settings screen */
+.settings-section {
   background: var(--surface);
-  border: 1px solid #2a2a2a;
-  border-radius: 999px;
-  color: var(--muted);
-  font-size: 13px;
-  font-weight: 700;
-  padding: 6px 10px;
-  cursor: pointer;
+  border: 1px solid #232323;
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 14px;
 }
-.hidden-count {
-  font-size: 11px;
-}
-.menu-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 20;
-}
-.hidden-menu-panel {
-  position: absolute;
-  right: 0;
-  top: calc(100% + 8px);
-  z-index: 30;
-  min-width: 220px;
-  max-width: 280px;
-  background: var(--surface);
-  border: 1px solid #2f2f2f;
-  border-radius: 14px;
-  padding: 8px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-}
-.hidden-menu-title {
-  font-size: 11px;
+.settings-title {
+  font-size: 12px;
   font-weight: 700;
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 1px;
-  padding: 6px 8px 8px;
+  margin-bottom: 12px;
 }
-.hidden-menu-row {
+.settings-subtitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 14px 0 8px;
+}
+.settings-hint {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+.settings-account {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.settings-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.settings-field {
+  margin-bottom: 10px;
+}
+.settings-field label {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+.settings-unit {
+  font-size: 11px;
+  font-weight: 600;
+  color: #555;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.settings-reset {
+  width: 100%;
+  margin-top: 8px;
+}
+.settings-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 8px;
+  padding: 8px 0;
+  border-top: 1px solid #1a1a1a;
 }
-.hidden-menu-name {
+.settings-row-name {
   font-size: 14px;
   font-weight: 600;
   color: var(--text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.btn-danger {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #ef4444;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 9px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.btn-danger:active {
+  opacity: 0.7;
 }
 
 /* "Hide bike from garage" action at the bottom of the bike detail view */

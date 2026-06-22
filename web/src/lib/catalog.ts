@@ -1,4 +1,4 @@
-import type { ComponentType, LubeType } from "./garage";
+import type { ComponentType, GarageSettings, LubeType } from "./garage";
 
 export interface CatalogEntry {
   type: ComponentType;
@@ -97,6 +97,29 @@ export const LUBE_LABEL: Record<LubeType, string> = {
 
 export function catalogEntry(type: ComponentType): CatalogEntry {
   return CATALOG.find((c) => c.type === type) ?? CATALOG[0];
+}
+
+// The default service interval used to seed a freshly-added component (and the
+// auto-added frame reminders). Returns meters for distance-based types and days
+// for time-based types. Rider `settings` override the researched catalog
+// defaults; for the chain those overrides are per-lube. The wax additive
+// heuristic still wins, because picking a chip *is* choosing a specific
+// interval — a custom per-lube default only applies to plain (no-chip) wax.
+export function defaultInterval(
+  type: ComponentType,
+  settings?: GarageSettings,
+  lube: LubeType = "wax",
+  additive: ChainAdditive = "none",
+): number {
+  const e = catalogEntry(type);
+  if (e.defaultDays != null) {
+    return settings?.intervals?.[type] ?? e.defaultDays;
+  }
+  if (e.hasLube) {
+    if (lube === "wax" && additive !== "none") return chainIntervalKm(lube, additive) * 1000;
+    return settings?.chainIntervals?.[lube] ?? chainIntervalKm(lube, "none") * 1000;
+  }
+  return settings?.intervals?.[type] ?? (e.defaultKm ?? 0) * 1000;
 }
 
 // The label as displayed/stored for a component. The drivetrain reads as the
