@@ -10,12 +10,13 @@ import {
 import {
   type Component,
   type Garage,
+  type GarageSettings,
   type LogEntry,
   emptyGarage,
   getGarage,
   putGarage,
 } from "./lib/garage";
-import { CATALOG } from "./lib/catalog";
+import { CATALOG, defaultInterval } from "./lib/catalog";
 
 interface GarageContextValue {
   garage: Garage;
@@ -27,6 +28,8 @@ interface GarageContextValue {
   removeComponent: (componentId: string) => Promise<void>;
   removeLogEntry: (logId: string) => Promise<void>;
   setBikeHidden: (bikeId: string, hidden: boolean) => Promise<void>;
+  // Persist the rider's default service intervals (replaces the whole object).
+  updateSettings: (settings: GarageSettings) => Promise<void>;
   // Seed the automatic whole-bike maintenance reminders for a bike if missing.
   ensureFrameReminders: (bikeId: string) => Promise<void>;
 }
@@ -161,6 +164,14 @@ export function GarageProvider({ children }: { children: ReactNode }) {
     [persist],
   );
 
+  const updateSettings = useCallback(
+    (settings: GarageSettings) => {
+      const g = ref.current;
+      return persist({ ...g, settings });
+    },
+    [persist],
+  );
+
   // Seed a bike's automatic reminders (torque check, annual service) exactly
   // once. Seeded bikes are recorded in `seededBikes`, so reminders the rider
   // later deletes stay deleted instead of reappearing on the next visit. Safe
@@ -181,7 +192,9 @@ export function GarageProvider({ children }: { children: ReactNode }) {
         label: e.label,
         installMeters: 0,
         intervalMeters: 0,
-        intervalDays: e.defaultDays,
+        // Time-based reminders seed their cadence from the rider's defaults
+        // (falling back to the catalog default when uncustomized).
+        intervalDays: defaultInterval(e.type, g.settings),
         installDate: now,
       }));
       return persist({
@@ -205,6 +218,7 @@ export function GarageProvider({ children }: { children: ReactNode }) {
         removeComponent,
         removeLogEntry,
         setBikeHidden,
+        updateSettings,
         ensureFrameReminders,
       }}
     >

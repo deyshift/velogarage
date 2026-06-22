@@ -46,6 +46,18 @@ export interface LogEntry {
   date: string; // ISO timestamp
 }
 
+// Rider-set default service intervals that seed ComponentForm for newly-added
+// components (and the auto-added frame reminders), overriding the researched
+// catalog defaults. Distance-based types are stored in meters; time-based types
+// (torque, inspection) in days. The chain keeps per-lube defaults in
+// `chainIntervals` instead of a single value. Only values that differ from the
+// catalog default are stored, so future catalog improvements still reach riders
+// who never customized a given type. See `defaultInterval` in catalog.ts.
+export interface GarageSettings {
+  intervals?: Partial<Record<ComponentType, number>>;
+  chainIntervals?: Partial<Record<LubeType, number>>;
+}
+
 export interface Garage {
   components: Component[];
   log: LogEntry[];
@@ -55,6 +67,8 @@ export interface Garage {
   // Bike ids whose automatic frame reminders have already been seeded, so a
   // reminder the rider deletes doesn't reappear on the next visit.
   seededBikes: string[];
+  // Rider-edited default service intervals (see GarageSettings).
+  settings: GarageSettings;
 }
 
 export const emptyGarage = (): Garage => ({
@@ -62,6 +76,7 @@ export const emptyGarage = (): Garage => ({
   log: [],
   hiddenBikeIds: [],
   seededBikes: [],
+  settings: {},
 });
 
 // Bring stored components up to date with the current catalog/shape:
@@ -96,6 +111,7 @@ export async function getGarage(): Promise<Garage> {
     log: data.log ?? [],
     hiddenBikeIds: (data.hiddenBikeIds ?? []).map(String),
     seededBikes: data.seededBikes ?? [],
+    settings: data.settings ?? {},
   };
 }
 

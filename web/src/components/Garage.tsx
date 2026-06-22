@@ -59,7 +59,7 @@ export function Garage({ bikes, loading, error, onRetry, onOpen }: Props) {
 
       {visible.length === 0 ? (
         <div className="empty-note">
-          All your bikes are hidden. Use the hidden-bikes menu in the top bar to unhide one.
+          All your bikes are hidden. Open Settings (tap your avatar) to unhide one.
         </div>
       ) : (
         visible.map((b) => <BikeCard key={b.id} bike={b} onClick={() => onOpen(b)} />)

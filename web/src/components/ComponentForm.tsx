@@ -5,12 +5,13 @@ import {
   LUBE_LABEL,
   additiveFromLabel,
   catalogEntry,
-  chainIntervalKm,
   componentLabel,
+  defaultInterval,
   isTimeBased,
   type ChainAdditive,
 } from "../lib/catalog";
 import type { Component, ComponentType, LubeType } from "../lib/garage";
+import { useGarage } from "../GarageContext";
 import { useUnits } from "../UnitsContext";
 import { fromMeters, toMeters } from "../lib/units";
 
@@ -40,6 +41,8 @@ const daysSince = (iso?: string) => {
 
 export function ComponentForm({ bikeId, bikeMeters, initial, onSubmit, onCancel }: Props) {
   const { units } = useUnits();
+  const { garage } = useGarage();
+  const settings = garage.settings;
   const isEdit = !!initial;
 
   const [type, setType] = useState<ComponentType>(initial?.type ?? "chain");
@@ -60,9 +63,9 @@ export function ComponentForm({ bikeId, bikeMeters, initial, onSubmit, onCancel 
   // unit. Likewise `wear` is "days since last done" vs. "distance ridden".
   const [interval, setInterval] = useState<string>(() => {
     if (initial?.intervalDays != null) return String(initial.intervalDays);
-    return String(
-      Math.round(fromMeters((initial?.intervalMeters ?? chainIntervalKm("wax") * 1000) || 0, units)),
-    );
+    if (initial) return String(Math.round(fromMeters(initial.intervalMeters || 0, units)));
+    // Add mode: seed from the rider's default for the starting type (chain/wax).
+    return String(Math.round(fromMeters(defaultInterval("chain", settings, "wax", "none"), units)));
   });
   const [wear, setWear] = useState<string>(() => {
     if (!initial) return "";
@@ -91,10 +94,8 @@ export function ComponentForm({ bikeId, bikeMeters, initial, onSubmit, onCancel 
   const isTire = type === "tire";
 
   const defaultIntervalFor = (t: ComponentType, l: LubeType, a: ChainAdditive) => {
-    const e = catalogEntry(t);
-    if (e.defaultDays != null) return String(e.defaultDays);
-    const kmVal = e.hasLube ? chainIntervalKm(l, a) : (e.defaultKm ?? 0);
-    return String(Math.round(fromMeters(kmVal * 1000, units)));
+    const val = defaultInterval(t, settings, l, a);
+    return isTimeBased(t) ? String(val) : String(Math.round(fromMeters(val, units)));
   };
 
   const changeType = (t: ComponentType) => {
