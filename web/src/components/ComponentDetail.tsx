@@ -122,7 +122,7 @@ export function ComponentDetail({
       </div>
 
       <button type="button" className="cd-reset" onClick={reset}>
-        {actionLabel}
+        Reset
       </button>
 
       <div className="cd-section">
@@ -134,16 +134,18 @@ export function ComponentDetail({
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
         />
-        <div className="cd-notes-actions">
-          <button
-            type="button"
-            className="btn-primary"
-            disabled={!notesDirty || savingNotes}
-            onClick={saveNotes}
-          >
-            {savingNotes ? "Saving…" : "Save"}
-          </button>
-        </div>
+        {(notesDirty || savingNotes) && (
+          <div className="cd-notes-actions">
+            <button
+              type="button"
+              className="btn-primary"
+              disabled={savingNotes}
+              onClick={saveNotes}
+            >
+              {savingNotes ? "Saving…" : "Save"}
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="cd-section">
