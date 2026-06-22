@@ -51,6 +51,16 @@ npm run dev
 
 The web app points at the production API by default (`web/src/lib/api.ts`); change that constant to `http://localhost:8000` to develop against a local API.
 
+To preview the UI without Strava or any API, run the **mock mode**:
+
+```bash
+npm run mock
+```
+
+This serves the app at `http://localhost:5173/velogarage/app/` with a fake
+athlete and two sample bikes — no OAuth, no backend. The "Connect with Strava"
+button fakes a sign-in; the garage persists edits to `localStorage`.
+
 ## Deploying
 
 - **API → Render:** Docker web service, root directory `api`. Set the env vars above. A `/health` endpoint (GET + HEAD) keeps it monitorable.

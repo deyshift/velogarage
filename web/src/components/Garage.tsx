@@ -52,20 +52,18 @@ export function Garage({ bikes, loading, error, onRetry, onOpen }: Props) {
   const visible = bikes.filter((b) => !hiddenIds.has(String(b.id)));
 
   return (
-    <div className="garage">
-      <div className="garage-list">
-        <div className="screen-label">
-          My Garage · {visible.length} {visible.length === 1 ? "bike" : "bikes"}
-        </div>
-
-        {visible.length === 0 ? (
-          <div className="empty-note">
-            All your bikes are hidden. Open Settings (tap your avatar) to unhide one.
-          </div>
-        ) : (
-          visible.map((b) => <BikeCard key={b.id} bike={b} onClick={() => onOpen(b)} />)
-        )}
+    <>
+      <div className="screen-label">
+        My Garage · {visible.length} {visible.length === 1 ? "bike" : "bikes"}
       </div>
-    </div>
+
+      {visible.length === 0 ? (
+        <div className="empty-note">
+          All your bikes are hidden. Open Settings (tap your avatar) to unhide one.
+        </div>
+      ) : (
+        visible.map((b) => <BikeCard key={b.id} bike={b} onClick={() => onOpen(b)} />)
+      )}
+    </>
   );
 }
