@@ -64,9 +64,12 @@ export interface Garage {
   // Strava gear ids the rider has hidden from the garage (e.g. a bike-share
   // bike that doesn't need maintenance tracking). Hidden bikes can be unhidden.
   hiddenBikeIds: string[];
-  // Bike ids whose automatic frame reminders have already been seeded, so a
-  // reminder the rider deletes doesn't reappear on the next visit.
-  seededBikes: string[];
+  // Map of bike id -> the catalog SEED_VERSION its automatic components were
+  // seeded at, so a default the rider deletes doesn't reappear on the next visit
+  // while a bike seeded under an older catalog still picks up newly-added
+  // defaults exactly once. (Legacy data stored this as a string[] of seeded bike
+  // ids; see `normalizeSeeded`.)
+  seededBikes: Record<string, number>;
   // Rider-edited default service intervals (see GarageSettings).
   settings: GarageSettings;
 }
@@ -75,9 +78,31 @@ export const emptyGarage = (): Garage => ({
   components: [],
   log: [],
   hiddenBikeIds: [],
-  seededBikes: [],
+  seededBikes: {},
   settings: {},
 });
+
+// `seededBikes` used to be a string[] of bike ids that had been seeded with the
+// (then only) frame reminders; it's now a map of bike id -> seed version. A
+// legacy array migrates to version 1 (the version that seeded only the torque
+// and annual-service reminders), so those bikes still pick up the newer wear-part
+// defaults once on their next visit.
+function normalizeSeeded(v: unknown): Record<string, number> {
+  const out: Record<string, number> = {};
+  // Skip prototype-polluting keys so a crafted stored id can't mutate the map's
+  // prototype when these are later spread/read.
+  const set = (key: string, raw: unknown) => {
+    if (key === "__proto__" || key === "constructor" || key === "prototype") return;
+    const num = Number(raw);
+    if (Number.isFinite(num)) out[key] = num;
+  };
+  if (Array.isArray(v)) {
+    for (const id of v) set(String(id), 1);
+  } else if (v && typeof v === "object") {
+    for (const [k, n] of Object.entries(v as Record<string, unknown>)) set(String(k), n);
+  }
+  return out;
+}
 
 // Bring stored components up to date with the current catalog/shape:
 //  - Labels are derived from the component type (and lube), not user-editable,
@@ -110,7 +135,7 @@ export async function getGarage(): Promise<Garage> {
     components: (data.components ?? []).map(migrateComponent),
     log: data.log ?? [],
     hiddenBikeIds: (data.hiddenBikeIds ?? []).map(String),
-    seededBikes: data.seededBikes ?? [],
+    seededBikes: normalizeSeeded(data.seededBikes),
     settings: data.settings ?? {},
   };
 }
