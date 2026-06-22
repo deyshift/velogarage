@@ -185,6 +185,14 @@ body {
     opacity: 0.25;
   }
 }
+.avatar-btn {
+  display: inline-flex;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: 50%;
+}
 .avatar {
   width: 32px;
   height: 32px;

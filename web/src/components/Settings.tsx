@@ -103,10 +103,14 @@ export function Settings({ athlete, bikes, onDisconnect, onClose }: Props) {
     setDraft(seedDraft(garage.settings, units));
   }, [garage.settings, units]);
 
-  // Commit on blur: rebuild the full settings from the draft and persist only
-  // if something actually changed (avoids redundant network writes).
+  // Commit on blur: rebuild the full settings from the draft, then re-seed the
+  // inputs from the result so invalid/blank/negative entries snap back to the
+  // effective value (catalog default or saved override) instead of lingering as
+  // stale text. Persist only when something actually changed (avoids redundant
+  // network writes); a no-op edit still gets normalized in the UI.
   const commit = () => {
     const next = buildSettings(draft, units);
+    setDraft(seedDraft(next, units));
     if (JSON.stringify(next) === JSON.stringify(garage.settings)) return;
     updateSettings(next).catch(() => alert("Couldn't save defaults. Please try again."));
   };

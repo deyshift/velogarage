@@ -46,20 +46,20 @@ export function TopBar({ athlete, syncing, onSync, onOpenSettings }: Props) {
           <span className="dot" />
           {syncing ? "Syncing…" : "Sync"}
         </button>
-        {/* The avatar opens Settings (account, defaults, hidden bikes). */}
-        {photo && photo !== "None" ? (
-          <img
-            className="avatar"
-            src={photo}
-            alt="Settings"
-            onClick={onOpenSettings}
-            role="button"
-          />
-        ) : (
-          <button type="button" className="avatar avatar-fallback" onClick={onOpenSettings}>
-            {initial}
-          </button>
-        )}
+        {/* The avatar opens Settings (account, defaults, hidden bikes). A real
+            button keeps it keyboard- and assistive-tech-reachable. */}
+        <button
+          type="button"
+          className="avatar-btn"
+          onClick={onOpenSettings}
+          aria-label="Settings"
+        >
+          {photo && photo !== "None" ? (
+            <img className="avatar" src={photo} alt="" />
+          ) : (
+            <span className="avatar avatar-fallback">{initial}</span>
+          )}
+        </button>
       </div>
     </div>
   );
