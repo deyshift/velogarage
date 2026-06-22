@@ -1,11 +1,8 @@
 import { API } from "./api";
 import { getToken, clearAuth } from "./auth";
-import { MOCK, mockAthlete } from "./mock";
 import type { Athlete } from "../types";
 
 export async function fetchAthlete(): Promise<Athlete> {
-  if (MOCK) return mockAthlete;
-
   const token = await getToken();
   if (!token) throw new Error("no_token");
 

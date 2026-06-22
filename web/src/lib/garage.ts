@@ -1,7 +1,6 @@
 import { API } from "./api";
 import { getToken } from "./auth";
 import { additiveFromLabel, componentLabel } from "./catalog";
-import { MOCK, loadMockGarage, saveMockGarage } from "./mock";
 import { type Units, fromMeters } from "./units";
 
 export type ComponentType =
@@ -127,8 +126,6 @@ function migrateComponent(c: Component & { psi?: number }): Component {
 }
 
 export async function getGarage(): Promise<Garage> {
-  if (MOCK) return loadMockGarage();
-
   const token = await getToken();
   if (!token) throw new Error("no_token");
   const r = await fetch(`${API}/api/garage`, { headers: { Authorization: `Bearer ${token}` } });
@@ -153,11 +150,6 @@ export function psiSummary(c: Component): string | null {
 }
 
 export async function putGarage(g: Garage): Promise<void> {
-  if (MOCK) {
-    saveMockGarage(g);
-    return;
-  }
-
   const token = await getToken();
   if (!token) throw new Error("no_token");
   const r = await fetch(`${API}/api/garage`, {
