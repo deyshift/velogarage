@@ -16,7 +16,7 @@ export function TopBar({ athlete, syncing, onSync, onOpenSettings }: Props) {
   return (
     <div className="topbar">
       <div className="brand">
-        🚲 <span>Velo</span>Garage
+        <span>Velo</span>Garage
       </div>
       <div className="top-right">
         <div className="units" role="group" aria-label="Distance units">

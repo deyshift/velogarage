@@ -63,9 +63,6 @@ body {
   gap: 26px;
   padding: 32px 24px;
 }
-.login .emoji {
-  font-size: 68px;
-}
 .login h1 {
   font-size: 40px;
   font-weight: 900;
@@ -240,9 +237,6 @@ body {
 }
 .bike-card:active {
   transform: scale(0.985);
-}
-.bike-emoji {
-  font-size: 32px;
 }
 .bike-info {
   flex: 1;
@@ -674,16 +668,6 @@ body {
   gap: 13px;
   padding: 13px 4px;
   border-bottom: 1px solid #1a1a1a;
-}
-.log-ic {
-  width: 38px;
-  height: 38px;
-  border-radius: 11px;
-  background: var(--surface);
-  display: grid;
-  place-items: center;
-  font-size: 17px;
-  flex-shrink: 0;
 }
 .log-main {
   flex: 1;

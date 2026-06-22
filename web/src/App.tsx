@@ -121,7 +121,7 @@ export default function App() {
               aria-current={view === "garage" ? "page" : undefined}
               onClick={() => go("garage")}
             >
-              🚲<span>Garage</span>
+              <span>Garage</span>
             </button>
             <button
               type="button"
@@ -129,7 +129,7 @@ export default function App() {
               aria-current={view === "log" ? "page" : undefined}
               onClick={() => go("log")}
             >
-              🔧<span>Log</span>
+              <span>Log</span>
             </button>
           </nav>
         </>
