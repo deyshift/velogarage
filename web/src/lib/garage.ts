@@ -88,16 +88,20 @@ export const emptyGarage = (): Garage => ({
 // and annual-service reminders), so those bikes still pick up the newer wear-part
 // defaults once on their next visit.
 function normalizeSeeded(v: unknown): Record<string, number> {
-  if (Array.isArray(v)) return Object.fromEntries(v.map((id) => [String(id), 1]));
-  if (v && typeof v === "object") {
-    const out: Record<string, number> = {};
-    for (const [k, n] of Object.entries(v as Record<string, unknown>)) {
-      const num = Number(n);
-      if (Number.isFinite(num)) out[String(k)] = num;
-    }
-    return out;
+  const out: Record<string, number> = {};
+  // Skip prototype-polluting keys so a crafted stored id can't mutate the map's
+  // prototype when these are later spread/read.
+  const set = (key: string, raw: unknown) => {
+    if (key === "__proto__" || key === "constructor" || key === "prototype") return;
+    const num = Number(raw);
+    if (Number.isFinite(num)) out[key] = num;
+  };
+  if (Array.isArray(v)) {
+    for (const id of v) set(String(id), 1);
+  } else if (v && typeof v === "object") {
+    for (const [k, n] of Object.entries(v as Record<string, unknown>)) set(String(k), n);
   }
-  return {};
+  return out;
 }
 
 // Bring stored components up to date with the current catalog/shape:

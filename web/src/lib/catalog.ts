@@ -10,12 +10,18 @@ export interface CatalogEntry {
   // fresh bike starts with the components most riders track (the wear parts) plus
   // the whole-bike calendar reminders, instead of an empty list.
   autoAdd?: boolean;
+  // The SEED_VERSION at which this entry began auto-seeding. On a version bump,
+  // only entries introduced *after* a bike's recorded seed version are added, so
+  // a default the rider deleted under an earlier version isn't resurrected.
+  // Required whenever `autoAdd` is set.
+  seededSince?: number;
 }
 
 // Bumped whenever the set of `autoAdd` components grows, so bikes seeded under an
 // older catalog pick up the newly-added defaults exactly once (see
 // `ensureDefaultComponents`). v1 seeded only the calendar reminders (torque +
 // annual service); v2 added the wear parts (drivetrain, tires, brake pads).
+// Each new default carries the version it arrived in via `seededSince`.
 export const SEED_VERSION = 2;
 
 const MI = 1.609344; // km per mile
@@ -85,17 +91,18 @@ const TIRE_INSPECT_KM = 62 * MI;
 // as the task to perform. The drivetrain entry's CATALOG label is just the
 // picker text; the stored/displayed label comes from componentLabel().
 export const CATALOG: CatalogEntry[] = [
-  // Wear parts seeded onto every bike (autoAdd) with their researched defaults.
-  { type: "chain", label: "Drivetrain", defaultKm: chainIntervalKm("wax"), hasLube: true, autoAdd: true },
-  { type: "tire", label: "Inflate and Inspect Tires", defaultKm: TIRE_INSPECT_KM, autoAdd: true },
-  { type: "brakePads", label: "Brake pads", defaultKm: 2000, autoAdd: true },
+  // Wear parts seeded onto every bike (autoAdd), added in seed v2, with their
+  // researched defaults.
+  { type: "chain", label: "Drivetrain", defaultKm: chainIntervalKm("wax"), hasLube: true, autoAdd: true, seededSince: 2 },
+  { type: "tire", label: "Inflate and Inspect Tires", defaultKm: TIRE_INSPECT_KM, autoAdd: true, seededSince: 2 },
+  { type: "brakePads", label: "Brake pads", defaultKm: 2000, autoAdd: true, seededSince: 2 },
   // Other distance-based parts the rider can add as needed.
   { type: "cassette", label: "Cassette", defaultKm: 8000 },
   { type: "chainring", label: "Chainring", defaultKm: 15000 },
   { type: "rotors", label: "Rotors", defaultKm: 10000 },
-  // Whole-bike, calendar-based reminders, seeded automatically for each bike.
-  { type: "torque", label: "Check and torque bolts", defaultDays: 180, autoAdd: true },
-  { type: "inspection", label: "Yearly inspection and service", defaultDays: 365, autoAdd: true },
+  // Whole-bike, calendar-based reminders, seeded automatically since seed v1.
+  { type: "torque", label: "Check and torque bolts", defaultDays: 180, autoAdd: true, seededSince: 1 },
+  { type: "inspection", label: "Yearly inspection and service", defaultDays: 365, autoAdd: true, seededSince: 1 },
 ];
 
 export const LUBE_LABEL: Record<LubeType, string> = {

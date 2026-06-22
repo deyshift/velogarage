@@ -177,20 +177,24 @@ export function GarageProvider({ children }: { children: ReactNode }) {
   // Seed a bike's automatic default components — the wear parts (drivetrain,
   // tires, brake pads) and whole-bike reminders (torque check, annual service) —
   // each at its catalog default. The bike's seed version is recorded in
-  // `seededBikes`, so a default the rider deletes stays deleted instead of
-  // reappearing, while a bike seeded under an older catalog still picks up
-  // newly-added defaults exactly once. Safe to call on every bike-detail mount:
-  // it's a no-op once the bike is seeded at the current version.
+  // `seededBikes`; on a catalog bump we only add defaults introduced *after* that
+  // version (`seededSince > prev`), so a bike picks up newly-added defaults
+  // exactly once while a default the rider deleted under an earlier version stays
+  // deleted. Safe to call on every bike-detail mount: it's a no-op once the bike
+  // is seeded at the current version.
   const ensureDefaultComponents = useCallback(
     (bikeId: string, bikeMeters: number) => {
       const g = ref.current;
       const id = String(bikeId);
-      if ((g.seededBikes[id] ?? 0) >= SEED_VERSION) return Promise.resolve();
+      const prev = g.seededBikes[id] ?? 0;
+      if (prev >= SEED_VERSION) return Promise.resolve();
       const have = new Set(
         g.components.filter((c) => String(c.bikeId) === id).map((c) => c.type),
       );
       const now = new Date().toISOString();
-      const toAdd: Component[] = CATALOG.filter((e) => e.autoAdd && !have.has(e.type)).map((e) => {
+      const toAdd: Component[] = CATALOG.filter(
+        (e) => e.autoAdd && (e.seededSince ?? 1) > prev && !have.has(e.type),
+      ).map((e) => {
         const base = { id: uid(), bikeId: id, type: e.type };
         if (e.defaultDays != null) {
           // Whole-bike reminder: calendar cadence from the rider's defaults
