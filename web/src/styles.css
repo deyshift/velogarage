@@ -275,6 +275,11 @@ body {
 }
 
 /* Settings screen */
+/* Settings replaces the top bar, so it has to add the top safe-area inset
+   itself — otherwise the status bar / notch overlaps the back arrow. */
+.settings {
+  padding-top: calc(env(safe-area-inset-top) + 16px);
+}
 .settings-section {
   background: var(--surface);
   border: 1px solid #232323;
