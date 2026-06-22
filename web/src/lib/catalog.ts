@@ -144,13 +144,3 @@ export function componentLabel(
 export function isTimeBased(type: ComponentType): boolean {
   return catalogEntry(type).defaultDays != null;
 }
-
-// The recurring service action shown on the detail "do it" button. Tires get an
-// inspect-and-inflate prompt; chains get a clean-and-lube prompt; time-based
-// reminders just get marked done.
-export function serviceActionLabel(type: ComponentType): string {
-  if (type === "tire") return "Inspect and inflate tires";
-  if (type === "chain") return "Clean & lube drivetrain";
-  if (isTimeBased(type)) return "Mark done";
-  return "Reset";
-}
