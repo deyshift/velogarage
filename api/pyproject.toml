@@ -1,0 +1,20 @@
+[project]
+name = "velogarage-api"
+version = "1.0.0"
+description = "VeloGarage API — Strava-backed bike maintenance tracker"
+requires-python = ">=3.11,<4.0"
+dependencies = [
+    "fastapi==0.115.5",
+    "uvicorn[standard]==0.32.1",
+    "httpx==0.28.0",
+    "python-dotenv==1.2.2",
+    "pydantic==2.10.3",
+]
+
+[tool.poetry]
+# This is a deployable app, not a published package — Poetry only manages the
+# dependency environment, it doesn't build/install this project itself.
+package-mode = false
+
+[tool.poetry.group.dev.dependencies]
+pytest = "8.3.4"

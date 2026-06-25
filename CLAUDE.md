@@ -1,5 +1,16 @@
 # VeloGarage — Claude working notes
 
+## Project layout & tooling
+- **`api/` is a Python (FastAPI) service managed with Poetry**, not pip. Deps
+  live in `api/pyproject.toml` with the lock in `api/poetry.lock`; there is no
+  `requirements.txt`. Use `poetry add` / `poetry add --group dev` to change
+  deps, `poetry install` to set up, and `poetry run <cmd>` (e.g.
+  `poetry run pytest`, `poetry run uvicorn main:app --reload`) to run things.
+  The Dockerfile and CI install via Poetry too — keep them in sync with the
+  lockfile.
+- **`web/` is a Vite + React (TypeScript) PWA** using npm. Tests run on Vitest
+  (`npm test`); keep `vitest` aligned with the same Vite major the app builds on.
+
 ## Pull requests
 - **Always include a GitHub closing keyword in the PR body** so the linked
   issue auto-closes when the PR merges. Use `Closes #N` / `Fixes #N` /
