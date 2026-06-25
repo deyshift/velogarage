@@ -33,12 +33,12 @@ The API is configured entirely through environment variables — see **[`api/.en
 
 ```bash
 cd api
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
+poetry install                 # installs runtime + dev (pytest) deps
 cp .env.example .env
 # Fill in STRAVA_CLIENT_ID, STRAVA_CLIENT_SECRET, API_PUBLIC_URL
 # (and UPSTASH_REDIS_REST_URL / _TOKEN to enable saving)
-uvicorn main:app --reload
+poetry run uvicorn main:app --reload
+poetry run pytest              # run the test suite
 ```
 
 ### 3. Run the web app

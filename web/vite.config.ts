@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
@@ -9,5 +10,11 @@ export default defineConfig({
   build: {
     outDir: "../docs/app",
     emptyOutDir: true,
+  },
+  // Unit tests cover pure logic (wear thresholds, unit conversions), so the
+  // lightweight node environment is enough — no jsdom needed.
+  test: {
+    environment: "node",
+    include: ["src/**/*.test.ts"],
   },
 });
