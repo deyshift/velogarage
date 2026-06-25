@@ -28,14 +28,14 @@ def test_set_garage_sends_namespaced_key(monkeypatch):
     """With Upstash configured (httpx mocked), SET targets the namespaced key."""
     captured: dict = {}
 
-    class FakeResponse:
+    class MockResponse:
         def raise_for_status(self):
             return None
 
         def json(self):
             return {"result": "OK"}
 
-    class FakeClient:
+    class MockClient:
         async def __aenter__(self):
             return self
 
@@ -44,11 +44,11 @@ def test_set_garage_sends_namespaced_key(monkeypatch):
 
         async def post(self, _url, headers=None, json=None):
             captured["body"] = json
-            return FakeResponse()
+            return MockResponse()
 
     monkeypatch.setenv("UPSTASH_REDIS_REST_URL", "https://upstash.example.test")
     monkeypatch.setenv("UPSTASH_REDIS_REST_TOKEN", "token")
-    monkeypatch.setattr(store.httpx, "AsyncClient", FakeClient)
+    monkeypatch.setattr(store.httpx, "AsyncClient", MockClient)
 
     asyncio.run(store.set_garage(123, {"components": []}))
 
@@ -58,19 +58,19 @@ def test_set_garage_sends_namespaced_key(monkeypatch):
 
 
 def _athlete_ok():
-    async def fake_get_athlete(_token):
+    async def mock_get_athlete(_token):
         return {"id": 99}
 
-    return fake_get_athlete
+    return mock_get_athlete
 
 
 def test_garage_store_not_configured_maps_to_503(monkeypatch):
     monkeypatch.setattr(main.strava, "get_athlete", _athlete_ok())
 
-    async def fake_get_garage(_athlete_id):
+    async def mock_get_garage(_athlete_id):
         raise store.StoreNotConfigured()
 
-    monkeypatch.setattr(main.store, "get_garage", fake_get_garage)
+    monkeypatch.setattr(main.store, "get_garage", mock_get_garage)
     r = client.get("/api/garage", headers={"Authorization": "Bearer x"})
     assert r.status_code == 503
 
@@ -78,9 +78,9 @@ def test_garage_store_not_configured_maps_to_503(monkeypatch):
 def test_garage_store_error_maps_to_502(monkeypatch):
     monkeypatch.setattr(main.strava, "get_athlete", _athlete_ok())
 
-    async def fake_get_garage(_athlete_id):
+    async def mock_get_garage(_athlete_id):
         raise RuntimeError("upstash boom")
 
-    monkeypatch.setattr(main.store, "get_garage", fake_get_garage)
+    monkeypatch.setattr(main.store, "get_garage", mock_get_garage)
     r = client.get("/api/garage", headers={"Authorization": "Bearer x"})
     assert r.status_code == 502

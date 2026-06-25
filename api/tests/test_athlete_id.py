@@ -16,27 +16,27 @@ def _status_error(code: int) -> httpx.HTTPStatusError:
 
 
 def test_strava_401_maps_to_401(monkeypatch):
-    async def fake_get_athlete(_token):
+    async def mock_get_athlete(_token):
         raise _status_error(401)
 
-    monkeypatch.setattr(main.strava, "get_athlete", fake_get_athlete)
+    monkeypatch.setattr(main.strava, "get_athlete", mock_get_athlete)
     r = client.get("/api/garage", headers={"Authorization": "Bearer bad"})
     assert r.status_code == 401
 
 
 def test_strava_5xx_maps_to_502(monkeypatch):
-    async def fake_get_athlete(_token):
+    async def mock_get_athlete(_token):
         raise _status_error(500)
 
-    monkeypatch.setattr(main.strava, "get_athlete", fake_get_athlete)
+    monkeypatch.setattr(main.strava, "get_athlete", mock_get_athlete)
     r = client.get("/api/garage", headers={"Authorization": "Bearer x"})
     assert r.status_code == 502
 
 
 def test_strava_timeout_maps_to_502(monkeypatch):
-    async def fake_get_athlete(_token):
+    async def mock_get_athlete(_token):
         raise httpx.TimeoutException("slow")
 
-    monkeypatch.setattr(main.strava, "get_athlete", fake_get_athlete)
+    monkeypatch.setattr(main.strava, "get_athlete", mock_get_athlete)
     r = client.get("/api/garage", headers={"Authorization": "Bearer x"})
     assert r.status_code == 502
