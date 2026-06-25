@@ -4,6 +4,13 @@ import { loginUrl } from "../lib/auth";
 // (/velogarage/app/ on GitHub Pages); an absolute root path would 404.
 const asset = (name: string) => `${import.meta.env.BASE_URL}${name}`;
 
+function loginErrorMessage(error: string): string {
+  if (error === "athletes_limit_exceeded")
+    return "This app has reached its limit of connected athletes. Contact the developer to request access.";
+  if (error === "access_denied") return "Login was cancelled. Try again when you're ready.";
+  return `Login failed: ${error}. Please try again.`;
+}
+
 export function Login({ error }: { error?: string }) {
   return (
     <div className="login">
@@ -11,7 +18,7 @@ export function Login({ error }: { error?: string }) {
         <span>Velo</span>Garage
       </h1>
       <div className="tag">Track your bikes. Know when to wrench.</div>
-      {error && <div className="err">Login failed: {error}. Please try again.</div>}
+      {error && <div className="err">{loginErrorMessage(error)}</div>}
       <a className="btn-strava" href={loginUrl} aria-label="Connect with Strava">
         <img src={asset("connect-with-strava.svg")} alt="Connect with Strava" />
       </a>
