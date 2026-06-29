@@ -1,7 +1,9 @@
+import hmac
 import os
+import secrets
 import urllib.parse
 import httpx
-from fastapi import Body, FastAPI, Header, HTTPException, Query
+from fastapi import Body, FastAPI, Header, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
@@ -52,6 +54,7 @@ class RefreshRequest(BaseModel):
 @app.get("/api/auth/login")
 async def auth_login():
     """Redirect the user to Strava's OAuth authorize page to start login."""
+    state = secrets.token_urlsafe(32)
     params = urllib.parse.urlencode(
         {
             "client_id": CLIENT_ID,
@@ -59,15 +62,27 @@ async def auth_login():
             "response_type": "code",
             "approval_prompt": "auto",
             "scope": STRAVA_SCOPE,
+            "state": state,
         }
     )
-    return RedirectResponse(f"{strava.STRAVA_AUTHORIZE_URL}?{params}")
+    redirect = RedirectResponse(f"{strava.STRAVA_AUTHORIZE_URL}?{params}")
+    redirect.set_cookie(
+        key="oauth_state",
+        value=state,
+        httponly=True,
+        samesite="lax",
+        secure=True,
+        max_age=600,
+    )
+    return redirect
 
 
 @app.get("/api/auth/callback")
 async def auth_callback(
+    request: Request,
     code: str | None = Query(None),
     error: str | None = Query(None),
+    state: str | None = Query(None),
 ):
     """
     Strava redirects here after the user authorises the app. The tokens are
@@ -77,7 +92,13 @@ async def auth_callback(
     """
 
     def redirect_back(query: str) -> RedirectResponse:
-        return RedirectResponse(f"{WEB_APP_URL}/#{query}")
+        r = RedirectResponse(f"{WEB_APP_URL}/#{query}")
+        r.delete_cookie("oauth_state")
+        return r
+
+    stored_state = request.cookies.get("oauth_state")
+    if not state or not stored_state or not hmac.compare_digest(state, stored_state):
+        return redirect_back(urllib.parse.urlencode({"error": "state_mismatch"}))
 
     if error or not code:
         # `error` is an attacker-controllable query param; don't reflect it
