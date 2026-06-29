@@ -11,6 +11,16 @@
 - **`web/` is a Vite + React (TypeScript) PWA** using npm. Tests run on Vitest
   (`npm test`); keep `vitest` aligned with the same Vite major the app builds on.
 
+## API conventions
+- **Pydantic** models are used for all request bodies (defined in `main.py` or
+  a dedicated `models.py`). Don't use raw `dict` for structured inputs.
+- **Tests** live in `api/tests/`. `conftest.py` sets required env vars before
+  any module import — keep that pattern so tests are hermetic. Use FastAPI's
+  `TestClient` (from `starlette.testclient`) for route tests; use
+  `unittest.mock.patch` / `AsyncMock` to stub async collaborators like
+  `strava.exchange_code`. Always run the full suite with `poetry run pytest`
+  before committing.
+
 ## Pull requests
 - **Always include a GitHub closing keyword in the PR body** so the linked
   issue auto-closes when the PR merges. Use `Closes #N` / `Fixes #N` /
