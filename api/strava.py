@@ -6,6 +6,10 @@ STRAVA_AUTHORIZE_URL = "https://www.strava.com/oauth/authorize"
 STRAVA_API_BASE = "https://www.strava.com/api/v3"
 
 
+class AthleteLimitError(Exception):
+    """Raised when the Strava app has reached its connected-athlete quota."""
+
+
 async def exchange_code(
     client_id: str, client_secret: str, code: str, redirect_uri: str | None = None
 ) -> dict[str, Any]:
@@ -19,7 +23,18 @@ async def exchange_code(
         data["redirect_uri"] = redirect_uri
     async with httpx.AsyncClient() as client:
         resp = await client.post(STRAVA_TOKEN_URL, data=data)
-        resp.raise_for_status()
+        # Strava returns 403 with an errors array when the app's connected-athlete
+        # quota is full; detect this before raising the generic HTTP error.
+        # Only peek at the body for error responses so a bad JSON body on a
+        # successful response still raises naturally instead of silently returning {}.
+        if not resp.is_success:
+            try:
+                body = resp.json()
+            except ValueError:
+                body = {}
+            if any(e.get("code") == "limit" for e in body.get("errors", [])):
+                raise AthleteLimitError("connected athlete limit exceeded")
+            resp.raise_for_status()
         return resp.json()
 
 

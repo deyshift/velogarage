@@ -88,6 +88,8 @@ async def auth_callback(
     try:
         redirect_uri = f"{API_PUBLIC_URL}/api/auth/callback"
         tokens = await strava.exchange_code(CLIENT_ID, CLIENT_SECRET, code, redirect_uri)
+    except strava.AthleteLimitError:
+        return redirect_back(urllib.parse.urlencode({"error": "athletes_limit_exceeded"}))
     except Exception:
         return redirect_back(urllib.parse.urlencode({"error": "token_exchange_failed"}))
 
