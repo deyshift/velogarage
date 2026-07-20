@@ -202,4 +202,4 @@ async def health():
 # trips false-positive downtime alerts.
 @app.api_route("/", methods=["GET", "HEAD"])
 async def root():
-    return {"status": "ok"}
+    return await health()
