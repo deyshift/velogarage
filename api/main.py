@@ -36,6 +36,10 @@ _web = urllib.parse.urlsplit(WEB_APP_URL)
 ALLOWED_ORIGINS = os.getenv(
     "ALLOWED_ORIGINS", f"{_web.scheme}://{_web.netloc}"
 ).split(",")
+# Only mark the CSRF state cookie Secure when the API itself is served over
+# HTTPS; local dev uses http://localhost so the browser would never send it
+# back, causing every callback to fail with state_mismatch.
+_COOKIE_SECURE = urllib.parse.urlsplit(API_PUBLIC_URL).scheme == "https"
 
 app = FastAPI(title="VeloGarage API")
 
@@ -71,7 +75,7 @@ async def auth_login():
         value=state,
         httponly=True,
         samesite="lax",
-        secure=True,
+        secure=_COOKIE_SECURE,
         max_age=600,
     )
     return redirect

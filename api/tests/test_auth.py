@@ -32,6 +32,8 @@ def test_auth_login_includes_state_in_url_and_cookie():
     assert "state" in q
     assert len(q["state"][0]) > 0
     assert "oauth_state" in r.cookies
+    # URL state and cookie must match — a mismatch would cause every callback to fail
+    assert q["state"][0] == r.cookies["oauth_state"]
 
 
 def test_auth_callback_rejects_missing_state():
