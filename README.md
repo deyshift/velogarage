@@ -53,7 +53,7 @@ The web app points at the production API by default (`web/src/lib/api.ts`); chan
 
 ## Deploying
 
-- **API → Render:** Docker web service, root directory `api`. Set the env vars above. A `/health` endpoint (GET + HEAD) keeps it monitorable.
+- **API → Render:** Docker web service, root directory `api`. Set the env vars above. A `/health` endpoint (GET + HEAD) keeps it monitorable; `/` responds the same way so a monitor pointed at the bare domain doesn't 404.
 - **Web → GitHub Pages:** `cd web && npm run build` emits to `docs/app/` (committed); GitHub Pages is configured to serve from `docs/` on `main`.
 - **Storage → Upstash Redis:** create a database (or reuse one — keys are namespaced `velogarage:`), and set its REST URL + token on Render.
 

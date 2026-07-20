@@ -195,3 +195,11 @@ async def write_garage(authorization: str = Header(...), garage: dict = Body(...
 @app.api_route("/health", methods=["GET", "HEAD"])
 async def health():
     return {"status": "ok"}
+
+
+# Some uptime monitors are pointed at the bare domain root instead of
+# /health; without this, that 404s (there's no other route for "/") and
+# trips false-positive downtime alerts.
+@app.api_route("/", methods=["GET", "HEAD"])
+async def root():
+    return {"status": "ok"}
