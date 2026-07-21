@@ -74,8 +74,15 @@ Most components wear by distance, calculated from the bike's Strava mileage:
 | Inflate and Inspect Tires | 62 mi (~100 km) |
 | Brake pads | 2,000 km |
 | Rotors | 10,000 km |
+| Charge Di2 battery | 621 mi (1,000 km) |
 
 Defaults are editable per component, in miles or kilometers.
+
+The **Charge Di2 battery** reminder is opt-in (add it only to electronic
+drivetrains). Shimano's own worst-case estimate for 12-speed Di2 is
+[~1,000 km per charge](https://bettershifting.com/frequently-asked-questions/how-long-will-the-battery-charge-last/)
+(typically 1,000–1,500 km); the conservative default nudges you to top up the
+main/derailleur battery a little early rather than run flat mid-ride.
 
 ### How the chain default is chosen
 
@@ -103,13 +110,20 @@ picker wouldn't improve the default.
 
 ### Whole-bike reminders (time-based)
 
-Two maintenance reminders are tracked on a calendar cadence instead of mileage,
-and are added automatically the first time you open each bike:
+These reminders are tracked on a calendar cadence instead of mileage:
 
 | Reminder | Default interval |
 |---|---|
 | Check and torque bolts | 180 days |
 | Yearly inspection and service | 365 days |
+| Check Di2 shifter batteries | 365 days |
+
+The first two are added automatically the first time you open each bike;
+**Check Di2 shifter batteries** is opt-in for electronic drivetrains. Its
+CR1632 coin cells last
+[~2 years](https://bettershifting.com/frequently-asked-questions/how-do-you-replace-a-di2-wireless-shifter-battery/)
+(up to 3–4 for lower tiers), so a yearly check leaves wide margin before
+end-of-life.
 
 Marking one "done" records today as the last service and restarts the countdown.
 Their intervals are editable per bike, in days.
