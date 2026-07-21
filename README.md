@@ -108,7 +108,7 @@ Heuristic lives in [`web/src/lib/catalog.ts`](web/src/lib/catalog.ts)
 about checking pressure, which doesn't vary by compound/use, so a category
 picker wouldn't improve the default.
 
-### Time-based reminders
+### Calendar reminders
 
 These reminders are tracked on a calendar cadence instead of mileage. The first
 two are whole-bike; the Di2 shifter check is drivetrain-specific and opt-in:
