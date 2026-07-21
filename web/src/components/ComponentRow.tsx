@@ -1,4 +1,4 @@
-import { type Component, type Status, computeWear, psiSummary } from "../lib/garage";
+import { type Component, type Status, computeWear, psiSummary, wearMeta } from "../lib/garage";
 import { useUnits } from "../UnitsContext";
 
 const STATUS: Record<Status, { cls: string; bar: string; txt: string }> = {
@@ -21,9 +21,7 @@ export function ComponentRow({ component, bikeMeters, onOpen }: Props) {
   const { pct, status } = wear;
   const s = STATUS[status];
   const sub = [component.brand, psiSummary(component)].filter(Boolean).join(" · ");
-  const meta = wear.timeBased
-    ? `${wear.elapsedDays} / ${component.intervalDays} days`
-    : `${dist(wear.wearMeters)} / ${dist(component.intervalMeters)} ${units}`;
+  const meta = wearMeta(component, wear, dist, units);
 
   return (
     <button type="button" className="comp comp-tap" onClick={onOpen}>

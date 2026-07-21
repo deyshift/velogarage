@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { type Component, type Status, computeWear, psiSummary } from "../lib/garage";
+import { type Component, type Status, computeWear, psiSummary, wearMeta } from "../lib/garage";
 import { LUBE_LABEL } from "../lib/catalog";
 import { useUnits } from "../UnitsContext";
 import { ComponentForm } from "./ComponentForm";
@@ -38,9 +38,7 @@ export function ComponentDetail({
   const s = STATUS[status];
   const sub = [component.brand, psiSummary(component)].filter(Boolean).join(" · ");
   const isTire = component.type === "tire";
-  const meta = wear.timeBased
-    ? `${wear.elapsedDays} / ${component.intervalDays} days`
-    : `${dist(wear.wearMeters)} / ${dist(component.intervalMeters)} ${units}`;
+  const meta = wearMeta(component, wear, dist, units);
 
   const [editingSettings, setEditingSettings] = useState(false);
   const [notes, setNotes] = useState(component.notes ?? "");
@@ -163,9 +161,11 @@ export function ComponentDetail({
             <div className="cd-setting">
               <span>Service interval</span>
               <span>
-                {wear.timeBased
-                  ? `${component.intervalDays} days`
-                  : `${dist(component.intervalMeters)} ${units}`}
+                {wear.hybrid
+                  ? `${dist(component.intervalMeters)} ${units} or ${component.intervalDays} days`
+                  : wear.timeBased
+                    ? `${component.intervalDays} days`
+                    : `${dist(component.intervalMeters)} ${units}`}
               </span>
             </div>
             {component.lube && (

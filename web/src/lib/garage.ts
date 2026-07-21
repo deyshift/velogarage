@@ -1,6 +1,6 @@
 import { API } from "./api";
 import { getToken } from "./auth";
-import { additiveFromLabel, componentLabel } from "./catalog";
+import { additiveFromLabel, componentLabel, defaultIntervalDays, isHybrid } from "./catalog";
 import { type Units, fromMeters } from "./units";
 
 export type ComponentType =
@@ -126,6 +126,14 @@ function migrateComponent(c: Component & { psi?: number }): Component {
     out.psiFront = out.psi;
     out.psiRear = out.psi;
   }
+  // Retrofit tires stored before they gained a calendar cadence (#78) with the
+  // catalog default day interval, so they now come due on days as well as miles.
+  // We don't fabricate an `installDate`: the calendar timer stays dormant (see
+  // computeWear) until the tire is next serviced, so an upgrade never fires a
+  // spurious "overdue" for a bike the rider hasn't touched in a week.
+  if (isHybrid(out.type) && out.intervalDays == null) {
+    out.intervalDays = defaultIntervalDays(out.type);
+  }
   delete out.psi;
   return out;
 }
@@ -168,10 +176,13 @@ export async function putGarage(g: Garage): Promise<void> {
 export type Status = "good" | "warn" | "over";
 
 export interface Wear {
-  timeBased: boolean;
-  wearMeters: number; // distance-based progress (0 for time-based)
-  elapsedDays: number; // time-based progress (0 for distance-based)
-  pct: number; // 0..(>1)
+  timeBased: boolean; // true when the cadence is *purely* calendar-based
+  hybrid: boolean; // true when both a mileage and a calendar cadence apply (tires)
+  wearMeters: number; // distance-based progress (0 for pure time-based)
+  elapsedDays: number; // time-based progress (0 for pure distance-based)
+  distancePct: number; // 0..(>1) on the mileage side (0 when no distance cadence)
+  timePct: number; // 0..(>1) on the calendar side (0 when no calendar cadence)
+  pct: number; // overall progress that drives the bar — the worse of the two
   status: Status;
 }
 
@@ -183,31 +194,64 @@ export function computeWear(
   units: Units,
   now: number = Date.now(),
 ): Wear {
-  // Time-based reminder: measure whole days since the last service.
-  if (component.intervalDays != null) {
-    const interval = component.intervalDays;
+  const hasTime = component.intervalDays != null;
+
+  // --- Calendar side (inert for pure distance components) ---
+  let elapsedDays = 0;
+  let timePct = 0;
+  let timeOver = false;
+  if (hasTime) {
+    const interval = component.intervalDays as number;
     // A missing or unparseable install date falls back to "now" (0 days
-    // elapsed) so a corrupt value can't poison the status with NaN.
+    // elapsed) so a corrupt value can't poison the status with NaN. For a tire
+    // migrated from before it had a calendar cadence this means the timer stays
+    // dormant until the tire is next serviced (which stamps `installDate`).
     const parsed = component.installDate ? new Date(component.installDate).getTime() : now;
     const start = Number.isFinite(parsed) ? parsed : now;
-    const elapsedDays = Math.max(0, Math.floor((now - start) / MS_PER_DAY));
-    const pct = interval > 0 ? elapsedDays / interval : 0;
-    const over = interval > 0 && elapsedDays >= interval;
-    const status: Status = over ? "over" : pct >= 0.8 ? "warn" : "good";
-    return { timeBased: true, wearMeters: 0, elapsedDays, pct, status };
+    elapsedDays = Math.max(0, Math.floor((now - start) / MS_PER_DAY));
+    timePct = interval > 0 ? elapsedDays / interval : 0;
+    timeOver = interval > 0 && elapsedDays >= interval;
   }
 
+  // --- Mileage side (inert for pure time-based reminders, whose interval is 0) ---
   const interval = component.intervalMeters;
   const wearMeters = Math.max(0, bikeMeters - component.installMeters);
-  const pct = interval > 0 ? wearMeters / interval : 0;
+  const distancePct = interval > 0 ? wearMeters / interval : 0;
   // Judge "overdue" at the precision the UI shows (whole mi/km): a component
   // displayed as "62 / 62" should read as overdue (red), not "service soon"
   // (yellow), even though its raw ratio is a hair under 1 from rounding.
   const wearShown = Math.round(fromMeters(wearMeters, units));
   const intervalShown = Math.round(fromMeters(interval, units));
-  const over = interval > 0 && (pct >= 1 || (intervalShown > 0 && wearShown >= intervalShown));
+  const distOver =
+    interval > 0 && (distancePct >= 1 || (intervalShown > 0 && wearShown >= intervalShown));
+
+  const hasDist = interval > 0;
+  const hybrid = hasTime && hasDist;
+  const timeBased = hasTime && !hasDist;
+
+  // Either cadence coming due drives the status; the bar tracks whichever is
+  // further along.
+  const over = distOver || timeOver;
+  const pct = Math.max(distancePct, timePct);
   const status: Status = over ? "over" : pct >= 0.8 ? "warn" : "good";
-  return { timeBased: false, wearMeters, elapsedDays: 0, pct, status };
+  return { timeBased, hybrid, wearMeters, elapsedDays, distancePct, timePct, pct, status };
+}
+
+/**
+ * The progress line shown under a component — "12 / 62 mi" for a wear part,
+ * "2 / 30 days" for a calendar reminder, or both joined for a hybrid tire
+ * ("12 / 62 mi · 2 / 4 days"). `dist` formats meters into the caller's unit.
+ */
+export function wearMeta(
+  component: Component,
+  wear: Wear,
+  dist: (meters: number) => string,
+  units: Units,
+): string {
+  const distPart = `${dist(wear.wearMeters)} / ${dist(component.intervalMeters)} ${units}`;
+  const timePart = `${wear.elapsedDays} / ${component.intervalDays} days`;
+  if (wear.hybrid) return `${distPart} · ${timePart}`;
+  return wear.timeBased ? timePart : distPart;
 }
 
 /** Worst status among a set of components, for the garage list badge. */

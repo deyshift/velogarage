@@ -3,6 +3,7 @@ import type { Bike } from "../types";
 import type { Component } from "../lib/garage";
 import { useUnits } from "../UnitsContext";
 import { useGarage } from "../GarageContext";
+import { isTimeBased } from "../lib/catalog";
 import { ComponentRow } from "./ComponentRow";
 import { ComponentForm } from "./ComponentForm";
 import { ComponentDetail } from "./ComponentDetail";
@@ -26,9 +27,12 @@ export function BikeDetail({ bike, onBack }: { bike: Bike; onBack: () => void })
   const bikeId = String(bike.id);
   const components = garage.components.filter((c) => String(c.bikeId) === bikeId);
   // Split into mileage-tracked wear parts and calendar-based whole-bike
-  // reminders so each renders in its own section.
-  const wearParts = components.filter((c) => c.intervalDays == null);
-  const reminders = components.filter((c) => c.intervalDays != null);
+  // reminders so each renders in its own section. Hybrid parts like tires (which
+  // carry both a mileage and a calendar cadence) group with the wear parts, so
+  // the split keys off the component type rather than the presence of a day
+  // interval.
+  const wearParts = components.filter((c) => !isTimeBased(c.type));
+  const reminders = components.filter((c) => isTimeBased(c.type));
   const storageDown = error?.includes("503");
 
   // Seed this bike's automatic default components once the garage has loaded.

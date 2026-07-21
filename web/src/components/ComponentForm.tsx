@@ -7,6 +7,8 @@ import {
   catalogEntry,
   componentLabel,
   defaultInterval,
+  defaultIntervalDays,
+  isHybrid,
   isTimeBased,
   type ChainAdditive,
 } from "../lib/catalog";
@@ -62,19 +64,32 @@ export function ComponentForm({ bikeId, bikeMeters, initial, onSubmit, onCancel 
   // components the interval is in days; otherwise it's in the current distance
   // unit. Likewise `wear` is "days since last done" vs. "distance ridden".
   const [interval, setInterval] = useState<string>(() => {
-    if (initial?.intervalDays != null) return String(initial.intervalDays);
+    // For a *purely* time-based component this field holds the day cadence; for
+    // a hybrid (tire) it's the distance interval, with days kept in
+    // `intervalDays` below — so only borrow `intervalDays` here for pure types.
+    if (initial?.intervalDays != null && !isHybrid(initial.type))
+      return String(initial.intervalDays);
     if (initial) return String(Math.round(fromMeters(initial.intervalMeters || 0, units)));
     // Add mode: seed from the rider's default for the starting type (chain/wax).
     return String(Math.round(fromMeters(defaultInterval("chain", settings, "wax", "none"), units)));
   });
   const [wear, setWear] = useState<string>(() => {
     if (!initial) return "";
-    if (initial.intervalDays != null) return String(daysSince(initial.installDate));
+    if (initial.intervalDays != null && !isHybrid(initial.type))
+      return String(daysSince(initial.installDate));
     return String(Math.round(fromMeters(Math.max(0, bikeMeters - initial.installMeters), units)));
   });
+  // Calendar side of a hybrid component's cadence (tires), edited in days. Only
+  // shown for hybrid types; distance stays in `interval`.
+  const [intervalDays, setIntervalDays] = useState<string>(() =>
+    initial?.intervalDays != null && isHybrid(initial.type)
+      ? String(initial.intervalDays)
+      : String(defaultIntervalDays("tire")),
+  );
   const [saving, setSaving] = useState(false);
 
   const timeBased = isTimeBased(type);
+  const hybrid = isHybrid(type);
 
   // Convert the typed values if the mi/km toggle changes while the form is open.
   // Time-based fields are in days, so they're left untouched.
@@ -101,6 +116,7 @@ export function ComponentForm({ bikeId, bikeMeters, initial, onSubmit, onCancel 
   const changeType = (t: ComponentType) => {
     setType(t);
     setInterval(defaultIntervalFor(t, lube, additive)); // add mode only (type is locked when editing)
+    if (isHybrid(t)) setIntervalDays(String(defaultIntervalDays(t)));
   };
   const changeLube = (l: LubeType) => {
     // Additives only apply to hot wax; drop the chip when leaving wax.
@@ -132,7 +148,7 @@ export function ComponentForm({ bikeId, bikeMeters, initial, onSubmit, onCancel 
           installDate,
         });
       } else {
-        await onSubmit({
+        const fields: Omit<Component, "id"> = {
           bikeId,
           type,
           label: componentLabel(type, entry.hasLube ? lube : undefined, additive),
@@ -142,7 +158,15 @@ export function ComponentForm({ bikeId, bikeMeters, initial, onSubmit, onCancel 
           psiRear: isTire && num(psiRear) > 0 ? num(psiRear) : undefined,
           installMeters: Math.max(0, bikeMeters - toMeters(num(wear), units)),
           intervalMeters: toMeters(num(interval), units),
-        });
+        };
+        if (hybrid) {
+          // Hybrid types also carry a calendar cadence. Preserve the existing
+          // anchor on edit (editing settings shouldn't restart the timer); start
+          // it now when adding, or when a legacy tire never had one.
+          fields.intervalDays = num(intervalDays);
+          fields.installDate = initial?.installDate ?? new Date().toISOString();
+        }
+        await onSubmit(fields);
       }
     } finally {
       setSaving(false);
@@ -247,6 +271,21 @@ export function ComponentForm({ bikeId, bikeMeters, initial, onSubmit, onCancel 
         />
       </div>
 
+      {hybrid && (
+        <div className="form-row">
+          <label>Inspect every (days)</label>
+          <input
+            type="number"
+            inputMode="numeric"
+            value={intervalDays}
+            onChange={(e) => setIntervalDays(e.target.value)}
+          />
+          <div className="form-hint">
+            Tires also come due on time — whichever comes first, miles or days.
+          </div>
+        </div>
+      )}
+
       <div className="form-row">
         <label>{wearLabel}</label>
         <input
@@ -273,7 +312,7 @@ export function ComponentForm({ bikeId, bikeMeters, initial, onSubmit, onCancel 
           type="button"
           className="btn-primary"
           onClick={submit}
-          disabled={saving || num(interval) <= 0}
+          disabled={saving || num(interval) <= 0 || (hybrid && num(intervalDays) <= 0)}
         >
           {saving ? "Saving…" : isEdit ? "Save changes" : "Add component"}
         </button>
