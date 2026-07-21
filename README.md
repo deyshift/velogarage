@@ -74,12 +74,12 @@ Most components wear by distance, calculated from the bike's Strava mileage:
 | Inflate and Inspect Tires | 62 mi (~100 km) |
 | Brake pads | 2,000 km |
 | Rotors | 10,000 km |
-| Charge Di2 battery | 621 mi (1,000 km) |
+| Charge Di2 derailleur battery | 621 mi (1,000 km) |
 
 Defaults are editable per component, in miles or kilometers.
 
-The **Charge Di2 battery** reminder is opt-in (add it only to electronic
-drivetrains). Shimano's own worst-case estimate for 12-speed Di2 is
+The **Charge Di2 derailleur battery** reminder is opt-in (add it only to
+electronic drivetrains). Shimano's own worst-case estimate for 12-speed Di2 is
 [~1,000 km per charge](https://bettershifting.com/frequently-asked-questions/how-long-will-the-battery-charge-last/)
 (typically 1,000–1,500 km); the conservative default nudges you to top up the
 main/derailleur battery a little early rather than run flat mid-ride.
