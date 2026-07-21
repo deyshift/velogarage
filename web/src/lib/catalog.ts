@@ -100,6 +100,17 @@ export const CATALOG: CatalogEntry[] = [
   { type: "cassette", label: "Cassette", defaultKm: 8000 },
   { type: "chainring", label: "Chainring", defaultKm: 15000 },
   { type: "rotors", label: "Rotors", defaultKm: 10000 },
+  // Electronic (Di2) drivetrain. Opt-in — most bikes are mechanical — so these
+  // are NOT auto-seeded (no `autoAdd`/`seededSince`). The main/derailleur
+  // battery drains per shift, so mileage is a good proxy: Shimano's own
+  // worst-case estimate for 12-speed Di2 is ~1000 km per charge (typically
+  // 1000–1500 km real-world), and defaulting to the conservative figure
+  // reminds the rider to charge slightly early rather than run flat mid-ride.
+  // The shifter CR1632 coin cells deplete on a calendar basis — ~2 years for
+  // Dura-Ace/Ultegra, up to 3–4 for lower tiers — so a yearly check leaves wide
+  // margin before end-of-life. See README + PR for sources.
+  { type: "di2Battery", label: "Charge Di2 battery", defaultKm: 1000 },
+  { type: "di2Shifter", label: "Check Di2 shifter batteries", defaultDays: 365 },
   // Whole-bike, calendar-based reminders, seeded automatically since seed v1.
   { type: "torque", label: "Check and torque bolts", defaultDays: 180, autoAdd: true, seededSince: 1 },
   { type: "inspection", label: "Yearly inspection and service", defaultDays: 365, autoAdd: true, seededSince: 1 },

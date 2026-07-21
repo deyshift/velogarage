@@ -10,6 +10,11 @@ export type ComponentType =
   | "tire"
   | "brakePads"
   | "rotors"
+  // Electronic (Di2) drivetrain maintenance. The main/derailleur battery is
+  // recharged on a mileage cadence; the shifter coin cells are checked on a
+  // calendar cadence. Both are opt-in (not auto-seeded) — see CATALOG.
+  | "di2Battery"
+  | "di2Shifter"
   // Whole-bike / frame reminders tracked on a calendar (days) cadence rather
   // than mileage — see CATALOG entries with `defaultDays`.
   | "torque"
