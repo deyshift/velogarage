@@ -17,7 +17,15 @@ import {
   getGarage,
   putGarage,
 } from "./lib/garage";
-import { CATALOG, SEED_VERSION, componentLabel, defaultInterval } from "./lib/catalog";
+import {
+  CATALOG,
+  SEED_VERSION,
+  componentLabel,
+  defaultInterval,
+  defaultIntervalDays,
+  isHybrid,
+  isTimeBased,
+} from "./lib/catalog";
 
 interface GarageContextValue {
   garage: Garage;
@@ -196,7 +204,7 @@ export function GarageProvider({ children }: { children: ReactNode }) {
         (e) => e.autoAdd && (e.seededSince ?? 1) > prev && !have.has(e.type),
       ).map((e) => {
         const base = { id: uid(), bikeId: id, type: e.type };
-        if (e.defaultDays != null) {
+        if (isTimeBased(e.type)) {
           // Whole-bike reminder: calendar cadence from the rider's defaults
           // (falling back to the catalog default when uncustomized).
           return {
@@ -212,13 +220,20 @@ export function GarageProvider({ children }: { children: ReactNode }) {
         // it reads as freshly serviced. The drivetrain carries the default wax
         // lube so its label and interval match a manually-added one.
         const lube: LubeType | undefined = e.hasLube ? "wax" : undefined;
-        return {
+        const comp: Component = {
           ...base,
           label: componentLabel(e.type, lube),
           lube,
           installMeters: bikeMeters,
           intervalMeters: defaultInterval(e.type, g.settings, lube ?? "wax"),
         };
+        // Hybrid wear part (tires): also start the calendar cadence from now, so
+        // it comes due on either miles or days (#78).
+        if (isHybrid(e.type)) {
+          comp.intervalDays = defaultIntervalDays(e.type);
+          comp.installDate = now;
+        }
+        return comp;
       });
       return persist({
         ...g,

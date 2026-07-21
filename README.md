@@ -71,7 +71,7 @@ Most components wear by distance, calculated from the bike's Strava mileage:
 | Clean & lube drivetrain (ceramic) | 405 mi |
 | Cassette | 8,000 km |
 | Chainring | 15,000 km |
-| Inflate and Inspect Tires | 62 mi (~100 km) |
+| Inflate and Inspect Tires | 62 mi (~100 km) **or** 4 days |
 | Brake pads | 2,000 km |
 | Rotors | 10,000 km |
 | Charge Di2 battery | 621 mi (1,000 km) |
@@ -103,10 +103,13 @@ in the pot:
 - **Wet lube:** 182 mi. **Ceramic:** 405 mi.
 
 Heuristic lives in [`web/src/lib/catalog.ts`](web/src/lib/catalog.ts)
-(`chainIntervalKm`). **Tires** stay on a flat inspect-and-inflate cadence
-(62 mi) rather than an attribute-aware *replacement* mileage: that cadence is
-about checking pressure, which doesn't vary by compound/use, so a category
-picker wouldn't improve the default.
+(`chainIntervalKm`). **Tires** stay on a flat inspect-and-inflate cadence rather
+than an attribute-aware *replacement* mileage: that cadence is about checking
+pressure, which doesn't vary by compound/use, so a category picker wouldn't
+improve the default. That cadence is *hybrid* — tires come due after **62 mi
+ridden or 4 days**, whichever lands first — because pressure bleeds off whether
+you ride or not (road/tubeless tires lose a few psi a day), so an unridden bike
+still needs a pre-ride check. Both intervals are editable per component.
 
 ### Whole-bike reminders (time-based)
 

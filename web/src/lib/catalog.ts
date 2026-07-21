@@ -79,12 +79,18 @@ export function additiveFromLabel(label?: string): ChainAdditive {
 }
 
 // Tires are tracked as a single combined entry on a short inspect-and-inflate
-// cadence (pressure bleeds off over ~a week of riding), not a
-// replacement-mileage interval. 62 mi ≈ 100 km; we store the exact
-// mile-equivalent so the default reads as "62 mi" (and "100 km"). Because this
-// cadence is about checking pressure (independent of compound/use), tires don't
-// take an attribute-aware replacement default — see #42 discussion / README.
+// cadence, not a replacement-mileage interval. The cadence is *hybrid*: tires
+// come due after 62 mi ridden OR 4 days elapsed, whichever hits first (see
+// #78). 62 mi ≈ 100 km; we store the exact mile-equivalent so the default reads
+// as "62 mi" (and "100 km"). Because this cadence is about checking pressure
+// (independent of compound/use), tires don't take an attribute-aware
+// replacement default — see #42 discussion / README.
 const TIRE_INSPECT_KM = 62 * MI;
+// The calendar side of the tire cadence. Pressure bleeds off even on an unridden
+// bike — road/tubeless tires typically lose a few psi per day — so 4 days is a
+// sensible "check before you ride" cap that catches a meaningful drop without
+// nagging daily.
+const TIRE_INSPECT_DAYS = 4;
 
 // Labels are phrased as the maintenance action ("Clean & wax drivetrain",
 // "Inflate and Inspect Tires") rather than the bare part name, so each row reads
@@ -94,7 +100,9 @@ export const CATALOG: CatalogEntry[] = [
   // Wear parts seeded onto every bike (autoAdd), added in seed v2, with their
   // researched defaults.
   { type: "chain", label: "Drivetrain", defaultKm: chainIntervalKm("wax"), hasLube: true, autoAdd: true, seededSince: 2 },
-  { type: "tire", label: "Inflate and Inspect Tires", defaultKm: TIRE_INSPECT_KM, autoAdd: true, seededSince: 2 },
+  // Hybrid cadence: both a mileage interval and a 4-day calendar interval,
+  // whichever comes due first (#78).
+  { type: "tire", label: "Inflate and Inspect Tires", defaultKm: TIRE_INSPECT_KM, defaultDays: TIRE_INSPECT_DAYS, autoAdd: true, seededSince: 2 },
   { type: "brakePads", label: "Brake pads", defaultKm: 2000, autoAdd: true, seededSince: 2 },
   // Other distance-based parts the rider can add as needed.
   { type: "cassette", label: "Cassette", defaultKm: 8000 },
@@ -140,7 +148,10 @@ export function defaultInterval(
   additive: ChainAdditive = "none",
 ): number {
   const e = catalogEntry(type);
-  if (e.defaultDays != null) {
+  // Pure time-based reminders (torque, inspection, Di2 shifter) → days. Hybrid
+  // types (tires) keep a distance primary interval here; their calendar cadence
+  // comes from `defaultIntervalDays`.
+  if (e.defaultDays != null && e.defaultKm == null) {
     return settings?.intervals?.[type] ?? e.defaultDays;
   }
   if (e.hasLube) {
@@ -168,7 +179,33 @@ export function componentLabel(
   return catalogEntry(type).label;
 }
 
-/** Whether a component type is tracked on a calendar (days) cadence. */
+/**
+ * Whether a component type is tracked *purely* on a calendar (days) cadence
+ * (torque check, annual service, Di2 shifter). Hybrid types like tires — which
+ * also carry a mileage interval — are deliberately excluded, so the distance UI
+ * (brand, PSI, wear-part grouping) still applies to them.
+ */
 export function isTimeBased(type: ComponentType): boolean {
-  return catalogEntry(type).defaultDays != null;
+  const e = catalogEntry(type);
+  return e.defaultDays != null && e.defaultKm == null;
+}
+
+/**
+ * Whether a component type runs on a *hybrid* cadence — both a mileage interval
+ * and a calendar interval, due whenever either elapses first. Tires are the only
+ * such type: pressure bleeds off whether you ride (miles) or not (days), so
+ * they're inspected after 62 mi OR 4 days (#78).
+ */
+export function isHybrid(type: ComponentType): boolean {
+  const e = catalogEntry(type);
+  return e.defaultDays != null && e.defaultKm != null;
+}
+
+/**
+ * The calendar cadence (in days) for a hybrid component's time side. Returns 0
+ * for types without a day cadence. (The distance side comes from
+ * `defaultInterval`.)
+ */
+export function defaultIntervalDays(type: ComponentType): number {
+  return catalogEntry(type).defaultDays ?? 0;
 }

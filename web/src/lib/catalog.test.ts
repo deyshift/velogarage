@@ -3,6 +3,8 @@ import {
   catalogEntry,
   componentLabel,
   defaultInterval,
+  defaultIntervalDays,
+  isHybrid,
   isTimeBased,
 } from "./catalog";
 
@@ -36,5 +38,34 @@ describe("Di2 catalog entries", () => {
   it("keeps both Di2 components opt-in (never auto-seeded)", () => {
     expect(catalogEntry("di2Battery").autoAdd).toBeFalsy();
     expect(catalogEntry("di2Shifter").autoAdd).toBeFalsy();
+  });
+});
+
+// Tires run on a hybrid cadence — 62 mi OR 4 days, whichever comes first (#78).
+describe("tire hybrid cadence", () => {
+  const MI = 1.609344;
+
+  it("carries both a mileage and a 4-day calendar interval", () => {
+    const e = catalogEntry("tire");
+    expect(e.defaultKm).toBeCloseTo(62 * MI, 6);
+    expect(e.defaultDays).toBe(4);
+  });
+
+  it("is hybrid — neither purely time-based nor a plain wear part", () => {
+    expect(isHybrid("tire")).toBe(true);
+    expect(isTimeBased("tire")).toBe(false);
+  });
+
+  it("resolves its distance interval (meters) via defaultInterval", () => {
+    // Hybrid types keep a distance primary interval; days come separately.
+    expect(defaultInterval("tire")).toBeCloseTo(62 * MI * 1000, 3);
+  });
+
+  it("resolves its calendar interval (days) via defaultIntervalDays", () => {
+    expect(defaultIntervalDays("tire")).toBe(4);
+  });
+
+  it("stays auto-seeded as a wear part", () => {
+    expect(catalogEntry("tire").autoAdd).toBe(true);
   });
 });
