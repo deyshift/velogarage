@@ -117,7 +117,7 @@ export const CATALOG: CatalogEntry[] = [
   // The shifter CR1632 coin cells deplete on a calendar basis — ~2 years for
   // Dura-Ace/Ultegra, up to 3–4 for lower tiers — so a yearly check leaves wide
   // margin before end-of-life. See README + PR for sources.
-  { type: "di2Battery", label: "Charge Di2 battery", defaultKm: 1000 },
+  { type: "di2Battery", label: "Charge Di2 derailleur battery", defaultKm: 1000 },
   { type: "di2Shifter", label: "Check Di2 shifter batteries", defaultDays: 365 },
   // Whole-bike, calendar-based reminders, seeded automatically since seed v1.
   { type: "torque", label: "Check and torque bolts", defaultDays: 180, autoAdd: true, seededSince: 1 },

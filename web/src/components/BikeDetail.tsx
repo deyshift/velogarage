@@ -171,7 +171,7 @@ export function BikeDetail({ bike, onBack }: { bike: Bike; onBack: () => void })
       ))}
 
       {reminders.length > 0 && (
-        <div className="comp-section">Whole-bike reminders</div>
+        <div className="comp-section">Calendar reminders</div>
       )}
 
       {reminders.map((c) => (

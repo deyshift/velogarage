@@ -15,13 +15,13 @@ import {
 describe("Di2 catalog entries", () => {
   it("charges the main battery on a mileage cadence (~1000 km)", () => {
     const e = catalogEntry("di2Battery");
-    expect(e.label).toBe("Charge Di2 battery");
+    expect(e.label).toBe("Charge Di2 derailleur battery");
     expect(e.defaultKm).toBe(1000);
     expect(e.defaultDays).toBeUndefined();
     expect(isTimeBased("di2Battery")).toBe(false);
     // defaultInterval returns meters for distance-based types.
     expect(defaultInterval("di2Battery")).toBe(1_000_000);
-    expect(componentLabel("di2Battery")).toBe("Charge Di2 battery");
+    expect(componentLabel("di2Battery")).toBe("Charge Di2 derailleur battery");
   });
 
   it("checks the shifter batteries on a yearly calendar cadence", () => {
