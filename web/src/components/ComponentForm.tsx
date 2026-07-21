@@ -64,7 +64,11 @@ export function ComponentForm({ bikeId, bikeMeters, initial, onSubmit, onCancel 
   // components the interval is in days; otherwise it's in the current distance
   // unit. Likewise `wear` is "days since last done" vs. "distance ridden".
   const [interval, setInterval] = useState<string>(() => {
-    if (initial?.intervalDays != null) return String(initial.intervalDays);
+    // For a *purely* time-based component this field holds the day cadence; for
+    // a hybrid (tire) it's the distance interval, with days kept in
+    // `intervalDays` below — so only borrow `intervalDays` here for pure types.
+    if (initial?.intervalDays != null && !isHybrid(initial.type))
+      return String(initial.intervalDays);
     if (initial) return String(Math.round(fromMeters(initial.intervalMeters || 0, units)));
     // Add mode: seed from the rider's default for the starting type (chain/wax).
     return String(Math.round(fromMeters(defaultInterval("chain", settings, "wax", "none"), units)));
